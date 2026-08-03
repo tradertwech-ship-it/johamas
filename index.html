@@ -1,0 +1,522 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Johamas Online Kiduuka - Main Store</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Ubuntu:wght@500;700;800&family=Inter:wght@400;500;600&family=Space+Mono:wght@400;700&display=swap">
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style> body { font-family: 'Inter', sans-serif; } .font-mono-custom { font-family: 'Space Mono', monospace; } </style>
+</head>
+<body class="min-h-screen bg-[#F6EEDD] pb-24 text-[#24170F]">
+  <header class="bg-[#1F4B33] text-white">
+    <div class="mx-auto flex max-w-5xl items-center justify-between p-4">
+      <div class="flex items-center gap-2">
+        <i data-lucide="store" class="h-6 w-6 text-[#E8A93D]"></i>
+        <div>
+          <h1 class="text-xs font-bold uppercase tracking-wider text-[#E8A93D]">Johamas Online</h1>
+          <span class="text-lg font-extrabold tracking-tight">Kiduuka Store</span>
+        </div>
+      </div>
+      <div class="flex items-center gap-3">
+        <button id="open-pack-btn" class="relative rounded-full bg-white/10 p-2 text-white hover:bg-white/25 transition">
+          <i data-lucide="shopping-bag" class="h-5 w-5"></i>
+          <span id="pack-badge" class="absolute -right-1 -top-1 hidden h-4 w-4 items-center justify-center rounded-full bg-[#C1502E] text-[10px] font-bold">0</span>
+        </button>
+        <div id="auth-header-container"></div>
+      </div>
+    </div>
+    <div class="mx-auto max-w-5xl px-4 pb-4">
+      <div class="relative">
+        <i data-lucide="search" class="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#8A7A63]"></i>
+        <input id="search-input" type="text" placeholder="Search the kiduuka..." class="w-full rounded-full bg-white/95 py-2 pl-9 pr-4 text-sm text-[#241B14] outline-none placeholder:text-[#8A7A63]" />
+      </div>
+    </div>
+    <div class="h-2 w-full rounded-full" style="background-image: repeating-linear-gradient(115deg, #1F4B33 0 22px, #C1502E 22px 44px, #E8A93D 44px 66px, #24170F 66px 88px);"></div>
+  </header>
+
+  <nav class="mx-auto flex max-w-5xl gap-2 p-4 overflow-x-auto">
+    <button data-tab="catalog" class="tab-btn rounded-full px-4 py-1.5 text-xs font-bold uppercase tracking-wide transition bg-[#241B14] text-white">Catalog</button>
+    <button data-tab="upload" class="tab-btn rounded-full px-4 py-1.5 text-xs font-bold uppercase tracking-wide transition bg-white text-[#5b4d3a]">Sell</button>
+    <button data-tab="account" class="tab-btn rounded-full px-4 py-1.5 text-xs font-bold uppercase tracking-wide transition bg-white text-[#5b4d3a]">Account</button>
+    <button data-tab="orders" class="tab-btn rounded-full px-4 py-1.5 text-xs font-bold uppercase tracking-wide transition bg-white text-[#5b4d3a]">My Orders (Tracking)</button>
+  </nav>
+
+  <main class="mx-auto max-w-5xl p-4">
+    <!-- CATALOG -->
+    <div id="view-catalog" class="tab-content">
+      <div id="catalog-loading" class="flex justify-center py-16"><i data-lucide="loader-2" class="h-8 w-8 animate-spin text-[#1F4B33]"></i></div>
+      <div id="catalog-empty" class="py-16 text-center hidden"><p class="text-base font-bold text-[#24170F]">This kiduuka is still empty</p></div>
+      <div id="catalog-grid" class="grid grid-cols-2 gap-4 sm:grid-cols-3"></div>
+    </div>
+
+    <!-- UPLOAD -->
+    <div id="view-upload" class="tab-content hidden">
+      <div class="mx-auto max-w-md rounded-2xl bg-[#F6EEDD] p-6 shadow-xl border">
+        <h2 class="mb-4 text-lg font-bold text-[#24170F]">List an item</h2>
+        <form id="upload-form" class="flex flex-col gap-4">
+          <div id="dropzone" class="flex cursor-pointer flex-col items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-[#1F4B33]/40 bg-white/60 p-6 text-center">
+            <i data-lucide="upload" class="h-8 w-8 text-[#1F4B33]"></i>
+            <span class="text-sm font-semibold text-[#24170F]">Tap to attach photos</span>
+            <input id="file-input" type="file" multiple accept="image/*" class="hidden">
+          </div>
+          <div id="upload-previews" class="grid grid-cols-4 gap-2"></div>
+          <input id="upload-title" type="text" placeholder="Product title" class="w-full rounded-lg border px-3 py-2 text-sm bg-white outline-none" required>
+          <div>
+            <label class="block text-xs font-bold text-[#8A7A63] mb-1">Original Price (UGX)</label>
+            <input id="upload-original-price" type="number" placeholder="e.g. 50000" class="w-full rounded-lg border px-3 py-2 text-sm bg-white outline-none" required>
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-[#8A7A63] mb-1">Added-In / Markup Price (UGX)</label>
+            <input id="upload-added-price" type="number" placeholder="e.g. 5000" class="w-full rounded-lg border px-3 py-2 text-sm bg-white outline-none" value="0" required>
+          </div>
+          <p id="upload-error" class="text-xs text-[#C1502E] hidden"></p>
+          <button type="submit" id="upload-submit-btn" class="rounded-xl bg-[#1F4B33] py-2.5 text-sm font-bold text-white disabled:opacity-50">Publish listing</button>
+        </form>
+      </div>
+    </div>
+
+    <!-- ACCOUNT -->
+    <div id="view-account" class="tab-content hidden">
+      <div class="mx-auto max-w-md rounded-2xl bg-[#F6EEDD] p-6 shadow-xl border">
+        <div id="account-logged-out" class="space-y-4">
+          <h2 class="text-lg font-bold text-[#24170F]">Sign in / Register</h2>
+          <p class="text-xs text-[#8A7A63] -mt-2">New here? Just fill this in once to create your account — next time, the same username + password logs you back in.</p>
+          <input id="auth-username" type="text" placeholder="Username" class="w-full rounded-lg border px-3 py-2 text-sm bg-white outline-none">
+          <input id="auth-phone" type="text" placeholder="Phone (07XX XXX XXX)" class="w-full rounded-lg border px-3 py-2 text-sm bg-white outline-none">
+          <input id="auth-password" type="password" placeholder="Password" class="w-full rounded-lg border px-3 py-2 text-sm bg-white outline-none">
+          <p id="auth-error" class="text-xs text-[#C1502E] hidden"></p>
+          <button id="auth-submit-btn" onclick="handleAuth()" class="w-full rounded-xl bg-[#1F4B33] py-2.5 text-xs font-bold text-white disabled:opacity-50">Continue</button>
+        </div>
+        <div id="account-logged-in" class="hidden">
+          <h2 id="account-username" class="text-lg font-bold text-[#24170F]"></h2>
+          <p id="account-phone" class="text-xs text-[#8A7A63] mb-4"></p>
+          <button onclick="handleLogout()" class="rounded-lg bg-[#C1502E]/10 px-3 py-1.5 text-xs font-bold text-[#C1502E]">Log out</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- BUYER ORDERS & TRACKING -->
+    <div id="view-orders" class="tab-content hidden">
+      <div class="mx-auto max-w-xl rounded-2xl bg-[#F6EEDD] p-6 shadow-xl border">
+        <h2 class="text-lg font-bold text-[#24170F] mb-1">Track Your Orders</h2>
+        <p class="text-xs text-[#8A7A63] mb-4">Enter your contact number used during checkout to check order arrival status.</p>
+        <div class="flex gap-2 mb-6">
+          <input id="track-contact-input" type="text" placeholder="07XX XXX XXX" class="flex-1 rounded-lg border bg-white px-3 py-2 text-sm outline-none">
+          <button onclick="loadBuyerOrders()" class="rounded-xl bg-[#1F4B33] px-4 py-2 text-xs font-bold text-white">Lookup</button>
+        </div>
+        <div id="buyer-orders-list" class="space-y-4"></div>
+      </div>
+    </div>
+  </main>
+
+  <!-- PACK DRAWER -->
+  <div id="pack-drawer-wrapper" class="fixed inset-0 z-45 flex justify-end pointer-events-none transition">
+    <div id="pack-backdrop" class="absolute inset-0 bg-black/50 opacity-0 transition-opacity pointer-events-none"></div>
+    <div id="pack-drawer" class="relative flex h-full w-full max-w-sm flex-col bg-[#F6EEDD] shadow-2xl transition-transform translate-x-full pointer-events-auto">
+      <div class="flex items-center justify-between border-b p-4"><h2 class="font-bold">Your Pack</h2><button id="pack-close-btn"><i data-lucide="x" class="h-5 w-5"></i></button></div>
+      <div id="pack-items-list" class="flex-1 overflow-y-auto p-4 space-y-3"></div>
+      <div id="pack-footer" class="border-t bg-[#EFE6D4] p-4 hidden">
+        <div class="mb-3 flex justify-between font-bold"><span>Total</span><span id="pack-total-price">UGX 0</span></div>
+        <input id="pack-contact-input" type="text" placeholder="Contact number (07XX XXX XXX)" class="mb-2 w-full rounded-lg border bg-white px-3 py-2 text-sm outline-none">
+        <button id="pack-send-btn" class="w-full rounded-xl bg-[#1F4B33] py-2.5 text-xs font-bold text-white disabled:opacity-50">Send Pack as split order</button>
+        <p id="pack-result-msg" class="mt-2 text-xs hidden"></p>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const SUPABASE_URL = "https://arndidkfyuozpwsxvdko.supabase.co";
+    const SUPABASE_ANON_KEY = "sb_publishable_fJAa7l45sUbavx2PxNhTZA_FLPohiaa";
+    const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    // Bucket used for listing photos. Create this bucket in Supabase Storage
+    // (Storage > New bucket > name "listing-images" > Public bucket = ON)
+    // before publishing goes live, or uploads will fail.
+    const IMAGE_BUCKET = "listing-images";
+
+    let state = { page: "catalog", listings: [], pack: [], currentUser: null, search: "", uploadFiles: [], uploadPreviews: [] };
+
+    // ---- helpers ----
+    async function hashPassword(pw) {
+      const enc = new TextEncoder().encode(pw);
+      const buf = await crypto.subtle.digest("SHA-256", enc);
+      return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, "0")).join("");
+    }
+
+    function setBusy(btn, busy, busyLabel, idleLabel) {
+      if (!btn) return;
+      btn.disabled = busy;
+      btn.textContent = busy ? busyLabel : idleLabel;
+    }
+
+    async function init() {
+      const { data, error } = await sb.from("listings").select("*").order("created_at", { ascending: false });
+      if (error) console.error("Failed to load listings:", error.message);
+      if (data) {
+        state.listings = data.map(item => ({
+          ...item,
+          original_price: Number(item.original_price || item.price || 0),
+          added_price: Number(item.added_price || 0),
+          total_price: Number(item.original_price || item.price || 0) + Number(item.added_price || 0),
+          sellerUsername: item.seller_username,
+          sellerPhone: item.seller_phone
+        }));
+      }
+      document.getElementById("catalog-loading").classList.add("hidden");
+
+      const session = localStorage.getItem("session");
+      if (session) {
+        const { data: u, error: uErr } = await sb.from("profiles").select("*").eq("username", session).maybeSingle();
+        if (uErr) console.error("Failed to restore session:", uErr.message);
+        if (u) {
+          state.currentUser = u;
+        } else {
+          localStorage.removeItem("session");
+        }
+      }
+      render();
+    }
+
+    function render() {
+      document.querySelectorAll(".tab-content").forEach(el => el.classList.add("hidden"));
+      document.getElementById(`view-${state.page}`).classList.remove("hidden");
+
+      if (state.page === "catalog") {
+        const grid = document.getElementById("catalog-grid");
+        const filtered = state.listings.filter(l => l.title.toLowerCase().includes(state.search.toLowerCase()));
+
+        if (filtered.length === 0) {
+          document.getElementById("catalog-empty").classList.remove("hidden");
+          grid.innerHTML = "";
+        } else {
+          document.getElementById("catalog-empty").classList.add("hidden");
+          grid.innerHTML = filtered.map(item => `
+            <div class="rounded-2xl border bg-white p-3 shadow-sm flex flex-col justify-between">
+              <div>
+                <div class="h-32 bg-gray-100 rounded-lg overflow-hidden mb-2"><img src="${item.images?.[0] || 'https://images.unsplash.com/photo-1523275335684-37898b6baf30'}" class="h-full w-full object-cover"></div>
+                <h3 class="font-bold text-sm text-[#24170F]">${item.title}</h3>
+                <p class="text-[10px] text-[#8A7A63] mt-0.5">Seller: ${item.sellerUsername || 'Unknown'}</p>
+                <p class="font-mono text-xs font-bold text-[#C1502E] mt-1">UGX ${item.total_price.toLocaleString()}</p>
+              </div>
+              <button onclick="togglePack('${item.id}')" class="mt-3 w-full rounded-xl bg-[#C1502E] py-2 text-xs font-bold text-white hover:bg-[#a64223] transition">Add to Pack</button>
+            </div>
+          `).join("");
+        }
+      }
+
+      if (state.currentUser) {
+        document.getElementById("account-logged-out").classList.add("hidden");
+        document.getElementById("account-logged-in").classList.remove("hidden");
+        document.getElementById("account-username").textContent = state.currentUser.username;
+        document.getElementById("account-phone").textContent = state.currentUser.phone;
+      } else {
+        document.getElementById("account-logged-out").classList.remove("hidden");
+        document.getElementById("account-logged-in").classList.add("hidden");
+      }
+      lucide.createIcons();
+    }
+
+    function switchPage(p) { state.page = p; render(); }
+    document.querySelectorAll(".tab-btn").forEach(btn => btn.addEventListener("click", () => switchPage(btn.getAttribute("data-tab"))));
+    document.getElementById("search-input").addEventListener("input", (e) => { state.search = e.target.value; render(); });
+
+    function togglePack(id) {
+      if (!state.pack.includes(id)) state.pack.push(id);
+      document.getElementById("pack-badge").textContent = state.pack.length;
+      document.getElementById("pack-badge").classList.remove("hidden");
+    }
+
+    document.getElementById("open-pack-btn").addEventListener("click", () => {
+      document.getElementById("pack-drawer").classList.remove("translate-x-full");
+      document.getElementById("pack-drawer-wrapper").classList.remove("pointer-events-none");
+      const list = document.getElementById("pack-items-list");
+      const items = state.pack.map(id => state.listings.find(l => l.id === id)).filter(Boolean);
+
+      if (items.length === 0) {
+        list.innerHTML = `<p class="text-xs text-center text-[#8A7A63] py-4">Your pack is empty.</p>`;
+        document.getElementById("pack-footer").classList.add("hidden");
+        return;
+      }
+
+      list.innerHTML = items.map(it => `
+        <div class="p-3 bg-white rounded-xl border flex justify-between items-center">
+          <div>
+            <span class="font-bold text-xs block">${it.title}</span>
+            <span class="font-mono text-[10px] text-[#C1502E]">UGX ${it.total_price.toLocaleString()}</span>
+          </div>
+          <button onclick="removeFromPack('${it.id}')" class="text-red-500 hover:text-red-700 text-xs font-bold">Remove</button>
+        </div>
+      `).join("");
+
+      const total = items.reduce((sum, i) => sum + i.total_price, 0);
+      document.getElementById("pack-total-price").textContent = "UGX " + total.toLocaleString();
+      document.getElementById("pack-footer").classList.remove("hidden");
+    });
+
+    function removeFromPack(id) {
+      state.pack = state.pack.filter(itemid => itemid !== id);
+      const badge = document.getElementById("pack-badge");
+      badge.textContent = state.pack.length;
+      if (state.pack.length === 0) badge.classList.add("hidden");
+      document.getElementById("open-pack-btn").click();
+    }
+
+    document.getElementById("pack-close-btn").addEventListener("click", () => {
+      document.getElementById("pack-drawer").classList.add("translate-x-full");
+      document.getElementById("pack-drawer-wrapper").classList.add("pointer-events-none");
+    });
+
+    // ---- upload / image handling ----
+    document.getElementById("dropzone").addEventListener("click", () => document.getElementById("file-input").click());
+    document.getElementById("file-input").addEventListener("change", (e) => {
+      const files = Array.from(e.target.files);
+      state.uploadFiles = files;
+      state.uploadPreviews = files.map(f => URL.createObjectURL(f));
+      document.getElementById("upload-previews").innerHTML = state.uploadPreviews.map(p => `<div class="h-16 rounded border bg-gray-50 overflow-hidden"><img src="${p}" class="h-full w-full object-cover"></div>`).join("");
+    });
+
+    async function uploadListingImages(files) {
+      const urls = [];
+      for (const file of files) {
+        const ext = (file.name.split(".").pop() || "jpg").toLowerCase();
+        const path = `${crypto.randomUUID()}.${ext}`;
+        const { error: upErr } = await sb.storage.from(IMAGE_BUCKET).upload(path, file);
+        if (upErr) {
+          console.error("Image upload failed:", upErr.message);
+          continue;
+        }
+        const { data } = sb.storage.from(IMAGE_BUCKET).getPublicUrl(path);
+        if (data?.publicUrl) urls.push(data.publicUrl);
+      }
+      return urls;
+    }
+
+    document.getElementById("upload-form").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const errEl = document.getElementById("upload-error");
+      errEl.classList.add("hidden");
+
+      if (!state.currentUser) {
+        errEl.textContent = "Please sign in first via the Account tab.";
+        errEl.classList.remove("hidden");
+        switchPage("account");
+        return;
+      }
+
+      const title = document.getElementById("upload-title").value.trim();
+      const original_price = Number(document.getElementById("upload-original-price").value);
+      const added_price = Number(document.getElementById("upload-added-price").value) || 0;
+
+      if (!title || !original_price || original_price <= 0) {
+        errEl.textContent = "Please enter a title and a valid original price.";
+        errEl.classList.remove("hidden");
+        return;
+      }
+
+      const btn = document.getElementById("upload-submit-btn");
+      setBusy(btn, true, "Uploading photos…", "Publish listing");
+
+      try {
+        const imageUrls = await uploadListingImages(state.uploadFiles);
+
+        const { error } = await sb.from("listings").insert([{
+          title,
+          original_price,
+          added_price,
+          price: original_price + added_price,
+          seller_username: state.currentUser.username,
+          seller_phone: state.currentUser.phone,
+          images: imageUrls
+        }]);
+
+        if (error) {
+          errEl.textContent = "Could not publish listing: " + error.message;
+          errEl.classList.remove("hidden");
+          return;
+        }
+
+        alert("Listing published successfully!");
+        document.getElementById("upload-form").reset();
+        state.uploadFiles = [];
+        state.uploadPreviews = [];
+        document.getElementById("upload-previews").innerHTML = "";
+        await init();
+        switchPage("catalog");
+      } finally {
+        setBusy(btn, false, "Uploading photos…", "Publish listing");
+      }
+    });
+
+    // ---- auth ----
+    async function handleAuth() {
+      const username = document.getElementById("auth-username").value.trim();
+      const phone = document.getElementById("auth-phone").value.trim();
+      const password = document.getElementById("auth-password").value;
+      const errEl = document.getElementById("auth-error");
+      errEl.classList.add("hidden");
+
+      if (!username || !phone || !password) {
+        errEl.textContent = "Please fill in username, phone, and password.";
+        errEl.classList.remove("hidden");
+        return;
+      }
+      if (password.length < 4) {
+        errEl.textContent = "Password should be at least 4 characters.";
+        errEl.classList.remove("hidden");
+        return;
+      }
+
+      const btn = document.getElementById("auth-submit-btn");
+      setBusy(btn, true, "Please wait…", "Continue");
+
+      try {
+        const pwHash = await hashPassword(password);
+        const { data: existing, error: findErr } = await sb.from("profiles").select("*").eq("username", username).maybeSingle();
+        if (findErr) {
+          errEl.textContent = "Something went wrong: " + findErr.message;
+          errEl.classList.remove("hidden");
+          return;
+        }
+
+        if (existing) {
+          if (existing.password_hash !== pwHash) {
+            errEl.textContent = "Incorrect password for this username.";
+            errEl.classList.remove("hidden");
+            return;
+          }
+          localStorage.setItem("session", username);
+          state.currentUser = existing;
+        } else {
+          const { data: created, error: createErr } = await sb.from("profiles")
+            .insert([{ username, phone, password_hash: pwHash }])
+            .select()
+            .maybeSingle();
+          if (createErr) {
+            errEl.textContent = "Could not create account: " + createErr.message;
+            errEl.classList.remove("hidden");
+            return;
+          }
+          localStorage.setItem("session", username);
+          state.currentUser = created;
+        }
+        render();
+      } finally {
+        setBusy(btn, false, "Please wait…", "Continue");
+      }
+    }
+
+    function handleLogout() {
+      localStorage.removeItem("session");
+      state.currentUser = null;
+      render();
+    }
+
+    // ---- checkout ----
+    document.getElementById("pack-send-btn").addEventListener("click", async () => {
+      const contact = document.getElementById("pack-contact-input").value.trim();
+      const msg = document.getElementById("pack-result-msg");
+      if (!contact) { msg.textContent = "Please enter contact number."; msg.className = "mt-2 text-xs text-[#C1502E]"; msg.classList.remove("hidden"); return; }
+
+      const rawItems = state.pack.map(id => state.listings.find(l => l.id === id)).filter(Boolean);
+      if (rawItems.length === 0) {
+        msg.textContent = "Your pack is empty.";
+        msg.className = "mt-2 text-xs text-[#C1502E]";
+        msg.classList.remove("hidden");
+        return;
+      }
+
+      const items = rawItems.map(it => ({
+        title: it.title,
+        original_price: it.original_price,
+        added_price: it.added_price,
+        total_price: it.total_price,
+        seller_username: it.sellerUsername,
+        seller_phone: it.sellerPhone
+      }));
+
+      const total = items.reduce((sum, i) => sum + i.total_price, 0);
+      const btn = document.getElementById("pack-send-btn");
+      setBusy(btn, true, "Dispatching…", "Send Pack as split order");
+
+      try {
+        const { data: recs, error: recErr } = await sb.from("minor_receivers").select("id");
+        if (recErr) {
+          msg.textContent = "Error loading receiver network: " + recErr.message;
+          msg.className = "mt-2 text-xs text-[#C1502E]";
+          msg.classList.remove("hidden");
+          return;
+        }
+        if (!recs || recs.length === 0) {
+          msg.textContent = "Error: No receiver nodes configured in network.";
+          msg.className = "mt-2 text-xs text-[#C1502E]";
+          msg.classList.remove("hidden");
+          return;
+        }
+
+        const { data: ords, error: ordErr } = await sb.from("orders").select("minor_receiver_id");
+        if (ordErr) console.error("Could not read existing order load:", ordErr.message);
+
+        const loadMap = {};
+        recs.forEach(r => loadMap[r.id] = 0);
+        ords?.forEach(o => { if (loadMap[o.minor_receiver_id] !== undefined) loadMap[o.minor_receiver_id]++; });
+
+        let targetRec = recs[0].id, min = loadMap[targetRec];
+        recs.forEach(r => { if (loadMap[r.id] < min) { min = loadMap[r.id]; targetRec = r.id; } });
+
+        const { error } = await sb.from("orders").insert([{
+          contact,
+          items,
+          total,
+          minor_receiver_id: targetRec,
+          status: "assigned"
+        }]);
+
+        if (error) {
+          msg.textContent = "Failed to dispatch order: " + error.message;
+          msg.className = "mt-2 text-xs text-[#C1502E]";
+          msg.classList.remove("hidden");
+          return;
+        }
+
+        msg.textContent = "Pack order successfully dispatched to network!";
+        msg.className = "mt-2 text-xs text-[#1F4B33] font-bold";
+        msg.classList.remove("hidden");
+        state.pack = [];
+        document.getElementById("pack-badge").classList.add("hidden");
+        setTimeout(() => document.getElementById("pack-close-btn").click(), 1500);
+      } finally {
+        setBusy(btn, false, "Dispatching…", "Send Pack as split order");
+      }
+    });
+
+    async function loadBuyerOrders() {
+      const contact = document.getElementById("track-contact-input").value.trim();
+      if (!contact) return alert("Please enter your contact number.");
+
+      const { data: orders, error } = await sb.from("orders").select("*, minor_receivers(name)").eq("contact", contact).order("created_at", { ascending: false });
+      const container = document.getElementById("buyer-orders-list");
+
+      if (error) {
+        container.innerHTML = `<p class='text-xs text-center text-[#C1502E] py-4'>Could not load orders: ${error.message}</p>`;
+        return;
+      }
+
+      container.innerHTML = orders?.map(o => `
+        <div class="p-4 bg-white rounded-xl shadow-sm border space-y-1">
+          <div class="flex justify-between items-center">
+            <span class="font-mono text-xs text-[#C1502E]">Order ID: #${o.id.slice(0,8)}</span>
+            <span class="text-[10px] px-2 py-0.5 rounded font-bold uppercase ${o.status === 'confirmed' ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'}">${o.status || 'Pending'}</span>
+          </div>
+          <p class="text-xs font-bold text-[#1F4B33] mt-1">Assigned Node: ${o.minor_receivers?.name || 'Processing'}</p>
+          <p class="text-xs text-[#8A7A63]">Total Pack Value: UGX ${Number(o.total).toLocaleString()}</p>
+        </div>
+      `).join("") || "<p class='text-xs text-center text-gray-500 py-4'>No orders found for this contact number.</p>";
+    }
+
+    init();
+  </script>
+</body>
+</html>
