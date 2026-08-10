@@ -1,0 +1,1184 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Johamas Online Kiduuka</title>
+    
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Space+Mono:wght@400;700&family=Ubuntu:wght@500;700;800&display=swap" rel="stylesheet">
+    
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    
+    <!-- Supabase JS Client v2 -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        mono: ['Space Mono', 'monospace'],
+                        ubuntu: ['Ubuntu', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #F6EEDD;
+            color: #24170F;
+            padding-bottom: 6rem;
+        }
+        .font-mono-custom {
+            font-family: 'Space Mono', monospace;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col antialiased">
+
+    <!-- HEADER SECTION -->
+    <header class="w-full bg-[#1F4B33] text-white sticky top-0 z-40 shadow-md">
+        <div class="max-w-4xl mx-auto px-4 py-3 flex flex-col gap-3">
+            
+            <!-- Top Row: Logo & Actions -->
+            <div class="flex items-center justify-between">
+                <!-- Brand Logo & Title -->
+                <div class="flex items-center gap-2.5">
+                    <div class="p-2 bg-white/10 rounded-xl flex items-center justify-center">
+                        <i data-lucide="store" class="w-6 h-6 text-[#E8A93D]"></i>
+                    </div>
+                    <div>
+                        <div class="text-xs font-bold uppercase tracking-wider text-[#E8A93D]">Johamas Online</div>
+                        <h1 class="text-lg font-extrabold font-ubuntu tracking-tight leading-none">Kiduuka</h1>
+                    </div>
+                </div>
+
+                <!-- Header Actions -->
+                <div class="flex items-center gap-2">
+                    <!-- Pack/Bag Trigger -->
+                    <button id="open-pack-btn" aria-label="Open Pack" class="relative p-2.5 bg-white/10 hover:bg-white/20 transition rounded-full flex items-center justify-center">
+                        <i data-lucide="shopping-bag" class="w-5 h-5 text-white"></i>
+                        <span id="pack-badge" class="hidden absolute -top-1 -right-1 bg-[#C1502E] text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full font-mono-custom">0</span>
+                    </button>
+
+                    <!-- Auth Header Container -->
+                    <div id="auth-header-container">
+                        <button id="auth-trigger-btn" class="px-3.5 py-1.5 bg-[#E8A93D] hover:bg-[#d89932] text-[#24170F] text-xs font-bold rounded-full transition shadow-sm">
+                            Log in
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Search Bar -->
+            <div class="relative w-full">
+                <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
+                    <i data-lucide="search" class="w-4 h-4 text-[#8A7A63]"></i>
+                </span>
+                <input type="text" id="search-input" placeholder="Search the kiduuka..." 
+                    class="w-full pl-10 pr-4 py-2 bg-white/95 text-[#241B14] placeholder-[#8A7A63] text-sm rounded-full focus:outline-none focus:ring-2 focus:ring-[#E8A93D] shadow-inner transition">
+            </div>
+
+        </div>
+
+        <!-- Kitenge Divider -->
+        <div class="h-2 w-full" style="background: repeating-linear-gradient(45deg, #1F4B33, #1F4B33 10px, #C1502E 10px, #C1502E 20px, #E8A93D 20px, #E8A93D 30px, #24170F 30px, #24170F 40px);"></div>
+    </header>
+
+    <!-- NAVIGATION TABS -->
+    <nav class="max-w-4xl mx-auto w-full px-4 mt-4 mb-2">
+        <div class="flex items-center justify-center gap-2 p-1 bg-[#EFE6D4] rounded-2xl max-w-md mx-auto border border-[#24170F]/5 shadow-sm">
+            <button data-tab="catalog" class="tab-btn flex-1 py-2 px-3 text-xs font-bold rounded-xl transition flex items-center justify-center gap-1.5 bg-[#241B14] text-white shadow-sm">
+                <i data-lucide="grid" class="w-3.5 h-3.5"></i> Catalog
+            </button>
+            <button data-tab="upload" class="tab-btn flex-1 py-2 px-3 text-xs font-bold rounded-xl transition flex items-center justify-center gap-1.5 text-[#5b4d3a] hover:bg-[#EFE6D4]">
+                <i data-lucide="plus-circle" class="w-3.5 h-3.5"></i> Sell
+            </button>
+            <button data-tab="account" class="tab-btn flex-1 py-2 px-3 text-xs font-bold rounded-xl transition flex items-center justify-center gap-1.5 text-[#5b4d3a] hover:bg-[#EFE6D4]">
+                <i data-lucide="user" class="w-3.5 h-3.5"></i> Account
+            </button>
+        </div>
+    </nav>
+
+    <!-- MAIN VIEW AREA -->
+    <main class="max-w-4xl mx-auto w-full px-4 flex-1 mt-2">
+        
+        <!-- A. CATALOG VIEW -->
+        <section id="view-catalog" class="tab-content">
+            <!-- Loading State -->
+            <div id="catalog-loading" class="flex flex-col items-center justify-center py-20">
+                <i data-lucide="loader-2" class="w-8 h-8 text-[#1F4B33] animate-spin mb-2"></i>
+                <p class="text-xs font-medium text-[#8A7A63]">Loading Kiduuka items...</p>
+            </div>
+
+            <!-- Empty State -->
+            <div id="catalog-empty" class="hidden flex flex-col items-center justify-center py-20 text-center px-4">
+                <div class="p-4 bg-[#EFE6D4] rounded-full mb-3 text-[#8A7A63]">
+                    <i data-lucide="package-open" class="w-8 h-8"></i>
+                </div>
+                <h3 id="catalog-empty-title" class="text-base font-bold text-[#24170F]">No items found</h3>
+                <p id="catalog-empty-sub" class="text-xs text-[#8A7A63] mt-1 max-w-xs">Be the first to list something awesome in the kiduuka today!</p>
+            </div>
+
+            <!-- Catalog Grid -->
+            <div id="catalog-grid" class="grid grid-cols-2 sm:grid-cols-3 gap-3.5">
+                <!-- Dynamic Item Cards injected here -->
+            </div>
+        </section>
+
+        <!-- B. UPLOAD / SELL VIEW -->
+        <section id="view-upload" class="tab-content hidden">
+            <div class="max-w-md mx-auto rounded-2xl bg-[#F6EEDD] p-6 shadow-xl border border-[#24170F]/10 mt-2">
+                <div class="mb-5 text-center">
+                    <h2 class="text-lg font-extrabold font-ubuntu text-[#1F4B33]">List an Item</h2>
+                    <p class="text-xs text-[#8A7A63]">Add details and photos to list your items in the kiduuka.</p>
+                </div>
+
+                <form id="upload-form" class="space-y-4">
+                    <!-- Dropzone -->
+                    <div id="dropzone" class="border-2 border-dashed border-[#1F4B33]/40 rounded-2xl p-6 text-center cursor-pointer hover:border-[#1F4B33] transition bg-[#EFE6D4]/50">
+                        <input type="file" id="file-input" accept="image/jpeg,image/png,image/webp,image/gif" multiple class="hidden">
+                        <div class="flex flex-col items-center pointer-events-none">
+                            <div class="p-3 bg-[#1F4B33]/10 rounded-full text-[#1F4B33] mb-2">
+                                <i data-lucide="upload-cloud" class="w-6 h-6"></i>
+                            </div>
+                            <p class="text-xs font-bold text-[#24170F]">Click to upload or drag images</p>
+                            <p class="text-[10px] text-[#8A7A63] mt-0.5">JPG, PNG, WEBP, GIF supported</p>
+                        </div>
+                    </div>
+
+                    <!-- Previews Grid -->
+                    <div id="upload-previews" class="grid grid-cols-4 gap-2 hidden">
+                        <!-- Thumbnails injected via JS -->
+                    </div>
+
+                    <!-- Product Title -->
+                    <div>
+                        <label class="block text-xs font-bold uppercase tracking-wider text-[#24170F] mb-1">Product Title</label>
+                        <input type="text" id="upload-title" placeholder="e.g., Kitenge Fabric, Smart Watch..." 
+                            class="w-full px-3.5 py-2.5 bg-white border border-[#24170F]/15 text-[#24170F] placeholder-[#8A7A63] text-xs rounded-xl focus:outline-none focus:ring-2 focus:ring-[#1F4B33]">
+                    </div>
+
+                    <!-- Price Input -->
+                    <div>
+                        <label class="block text-xs font-bold uppercase tracking-wider text-[#24170F] mb-1">Base Price (UGX)</label>
+                        <input type="text" inputmode="numeric" id="upload-price" placeholder="e.g., 25000" 
+                            class="w-full px-3.5 py-2.5 bg-white border border-[#24170F]/15 text-[#24170F] placeholder-[#8A7A63] text-xs rounded-xl font-mono-custom focus:outline-none focus:ring-2 focus:ring-[#1F4B33]">
+                    </div>
+
+                    <!-- Error/Success Elements -->
+                    <div id="upload-error" class="hidden text-xs text-[#C1502E] font-medium text-center bg-[#C1502E]/10 p-2.5 rounded-xl"></div>
+                    <div id="upload-success" class="hidden text-xs text-[#1F4B33] font-medium text-center bg-[#1F4B33]/10 p-2.5 rounded-xl"></div>
+
+                    <!-- Submit Button -->
+                    <button type="submit" id="upload-submit-btn" class="w-full py-3 bg-[#1F4B33] hover:bg-[#183c29] text-white text-xs font-bold rounded-xl transition shadow-md flex items-center justify-center gap-2">
+                        <i data-lucide="check" class="w-4 h-4"></i> Publish Listing
+                    </button>
+                </form>
+            </div>
+        </section>
+
+        <!-- C. ACCOUNT VIEW -->
+        <section id="view-account" class="tab-content hidden">
+            <div id="account-logged-out" class="max-w-md mx-auto text-center py-16 px-4">
+                <div class="p-4 bg-[#EFE6D4] rounded-full inline-flex text-[#8A7A63] mb-3">
+                    <i data-lucide="user-x" class="w-8 h-8"></i>
+                </div>
+                <h3 class="text-base font-bold text-[#24170F]">Not Logged In</h3>
+                <p class="text-xs text-[#8A7A63] mt-1 mb-4">Log in or create a Kiduuka account to view your profile and manage your listings.</p>
+                <button id="account-login-trigger" class="px-5 py-2.5 bg-[#1F4B33] text-white text-xs font-bold rounded-xl shadow transition">
+                    Log in / Register
+                </button>
+            </div>
+
+            <div id="account-logged-in" class="hidden space-y-6">
+                <!-- User Profile Header -->
+                <div class="bg-white p-5 rounded-2xl border border-[#24170F]/10 shadow-sm flex items-center justify-between">
+                    <div class="flex items-center gap-3">
+                        <div class="w-12 h-12 bg-[#1F4B33]/10 rounded-full flex items-center justify-center text-[#1F4B33]">
+                            <i data-lucide="user" class="w-6 h-6"></i>
+                        </div>
+                        <div>
+                            <h3 id="account-username" class="text-sm font-bold text-[#24170F]">@username</h3>
+                            <p id="account-phone" class="text-xs text-[#8A7A63] font-mono-custom mt-0.5">0700000000</p>
+                        </div>
+                    </div>
+                    <button id="logout-btn" class="px-3 py-1.5 bg-[#C1502E]/10 hover:bg-[#C1502E]/20 text-[#C1502E] text-xs font-bold rounded-xl transition flex items-center gap-1.5">
+                        <i data-lucide="log-out" class="w-3.5 h-3.5"></i> Logout
+                    </button>
+                </div>
+
+                <!-- User Listings Section -->
+                <div>
+                    <h4 id="account-listings-heading" class="text-xs font-bold uppercase tracking-wider text-[#8A7A63] mb-3">Your Listings (0)</h4>
+                    <div id="account-listings-grid" class="grid grid-cols-2 sm:grid-cols-3 gap-3.5">
+                        <!-- User items injected here -->
+                    </div>
+                </div>
+
+                <!-- Danger Zone (Account Deletion) -->
+                <div class="bg-[#C1502E]/5 border border-[#C1502E]/20 p-4 rounded-2xl space-y-3">
+                    <h4 class="text-xs font-bold uppercase tracking-wider text-[#C1502E]">Danger Zone</h4>
+                    <button id="init-delete-btn" class="px-3.5 py-2 bg-[#C1502E] text-white text-xs font-bold rounded-xl hover:bg-[#a44225] transition shadow-sm">
+                        Delete Account
+                    </button>
+                    
+                    <div id="danger-zone-confirm" class="hidden pt-2 border-t border-[#C1502E]/20 space-y-2">
+                        <p class="text-xs text-[#C1502E] font-medium">Warning: This action is permanent and removes all your data from the Kiduuka.</p>
+                        <div class="flex items-center gap-2">
+                            <button id="confirm-delete-btn" class="px-3 py-1.5 bg-[#C1502E] text-white text-xs font-bold rounded-xl">Yes, delete</button>
+                            <button id="cancel-delete-btn" class="px-3 py-1.5 bg-white text-[#24170F] border border-[#24170F]/20 text-xs font-bold rounded-xl">Cancel</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- MODALS & OVERLAYS -->
+
+    <!-- A. AUTH MODAL -->
+    <div id="auth-modal" class="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm hidden flex items-center justify-center p-4">
+        <div class="bg-[#F6EEDD] w-full max-w-sm rounded-2xl p-6 shadow-2xl border border-[#24170F]/10 relative">
+            <button id="auth-close-btn" class="absolute top-4 right-4 text-[#8A7A63] hover:text-[#24170F]">
+                <i data-lucide="x" class="w-5 h-5"></i>
+            </button>
+
+            <div class="mb-5">
+                <h3 id="auth-modal-title" class="text-base font-extrabold font-ubuntu text-[#1F4B33]">Log in</h3>
+                <p class="text-xs text-[#8A7A63] mt-0.5">Access your Kiduuka account</p>
+            </div>
+
+            <form id="auth-form" class="space-y-3.5">
+                <!-- Username Input -->
+                <div>
+                    <label class="block text-xs font-bold uppercase tracking-wider text-[#24170F] mb-1">Username</label>
+                    <input type="text" id="auth-username" autocomplete="username" placeholder="e.g. kiduukavendor" 
+                        class="w-full px-3.5 py-2.5 bg-white border border-[#24170F]/15 text-[#24170F] placeholder-[#8A7A63] text-xs rounded-xl focus:outline-none focus:ring-2 focus:ring-[#1F4B33]">
+                </div>
+
+                <!-- Phone Container (exposed during registration) -->
+                <div id="auth-phone-container" class="hidden">
+                    <label class="block text-xs font-bold uppercase tracking-wider text-[#24170F] mb-1">Phone Number</label>
+                    <input type="tel" id="auth-phone" placeholder="e.g. 0770000000" 
+                        class="w-full px-3.5 py-2.5 bg-white border border-[#24170F]/15 text-[#24170F] placeholder-[#8A7A63] text-xs rounded-xl font-mono-custom focus:outline-none focus:ring-2 focus:ring-[#1F4B33]">
+                </div>
+
+                <!-- Password Input -->
+                <div>
+                    <label class="block text-xs font-bold uppercase tracking-wider text-[#24170F] mb-1">Password</label>
+                    <div class="relative">
+                        <input type="password" id="auth-password" autocomplete="current-password" placeholder="••••••••" 
+                            class="w-full pl-3.5 pr-10 py-2.5 bg-white border border-[#24170F]/15 text-[#24170F] placeholder-[#8A7A63] text-xs rounded-xl focus:outline-none focus:ring-2 focus:ring-[#1F4B33]">
+                        <button type="button" id="auth-toggle-pw" class="absolute inset-y-0 right-0 pr-3.5 flex items-center text-[#8A7A63] hover:text-[#24170F]">
+                            <i data-lucide="eye" class="w-4 h-4"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Inline Error Text -->
+                <div id="auth-error" class="hidden text-xs text-[#C1502E] font-medium bg-[#C1502E]/10 p-2.5 rounded-xl text-center"></div>
+
+                <!-- Submit Button -->
+                <button type="submit" id="auth-submit-btn" class="w-full py-3 bg-[#1F4B33] hover:bg-[#183c29] text-white text-xs font-bold rounded-xl transition shadow-md">
+                    Log in
+                </button>
+            </form>
+
+            <div class="mt-4 text-center">
+                <button type="button" id="auth-switch-btn" class="text-xs text-[#8A7A63] hover:text-[#1F4B33] font-medium">
+                    Don't have an account? <span class="text-[#E8A93D] font-bold underline">Register</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- B. IMAGE VIEWER MODAL -->
+    <div id="image-viewer" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm hidden flex items-center justify-center p-4">
+        <button id="viewer-close-btn" class="absolute top-4 right-4 text-white/80 hover:text-white p-2 z-10">
+            <i data-lucide="x" class="w-6 h-6"></i>
+        </button>
+        <button id="viewer-prev" class="absolute left-4 top-1/2 -translate-y-1/2 text-white/80 hover:text-white p-3 bg-white/10 hover:bg-white/20 rounded-full z-10 transition">
+            <i data-lucide="chevron-left" class="w-6 h-6"></i>
+        </button>
+        <button id="viewer-next" class="absolute right-4 top-1/2 -translate-y-1/2 text-white/80 hover:text-white p-3 bg-white/10 hover:bg-white/20 rounded-full z-10 transition">
+            <i data-lucide="chevron-right" class="w-6 h-6"></i>
+        </button>
+
+        <div class="max-w-3xl max-h-[80vh] flex flex-col items-center justify-center relative">
+            <img id="viewer-img" src="" alt="Zoomed item preview" class="max-h-[70vh] max-w-full object-contain rounded-xl shadow-2xl">
+            <div id="viewer-dots" class="flex items-center gap-1.5 mt-4">
+                <!-- Dots injected via JS -->
+            </div>
+        </div>
+    </div>
+
+    <!-- C. PACK DRAWER -->
+    <div id="pack-drawer-wrapper" class="fixed inset-0 z-50 pointer-events-none flex justify-end transition-opacity duration-300 opacity-0 hidden">
+        <!-- Backdrop -->
+        <div id="pack-backdrop" class="absolute inset-0 bg-black/50 pointer-events-auto"></div>
+
+        <!-- Drawer Slide-out -->
+        <div id="pack-drawer" class="relative w-full max-w-md bg-[#F6EEDD] h-full shadow-2xl flex flex-col pointer-events-auto transform translate-x-full transition-transform duration-300">
+            <!-- Header -->
+            <div class="p-4 bg-[#1F4B33] text-white flex items-center justify-between">
+                <div class="flex items-center gap-2">
+                    <i data-lucide="shopping-bag" class="w-5 h-5 text-[#E8A93D]"></i>
+                    <h3 class="text-sm font-bold font-ubuntu uppercase tracking-wider">Your Pack</h3>
+                </div>
+                <button id="pack-close-btn" class="p-1.5 text-white/80 hover:text-white rounded-lg transition">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+
+            <!-- Content List -->
+            <div id="pack-items-list" class="flex-1 overflow-y-auto p-4 space-y-3">
+                <!-- Pack items injected via JS -->
+            </div>
+
+            <!-- Drawer Footer -->
+            <div id="pack-footer" class="p-4 bg-[#EFE6D4] border-t border-[#24170F]/10 space-y-3">
+                <div class="flex items-center justify-between">
+                    <span class="text-xs font-bold uppercase tracking-wider text-[#8A7A63]">Total Price:</span>
+                    <span id="pack-total-price" class="text-sm font-extrabold font-mono-custom text-[#1F4B33]">UGX 0</span>
+                </div>
+                <div>
+                    <label class="block text-[10px] font-bold uppercase tracking-wider text-[#24170F] mb-1">Your Phone Number</label>
+                    <input type="tel" id="pack-contact-input" placeholder="e.g., 0770000000" 
+                        class="w-full px-3 py-2 bg-white border border-[#24170F]/15 text-[#24170F] placeholder-[#8A7A63] text-xs rounded-xl font-mono-custom focus:outline-none focus:ring-2 focus:ring-[#1F4B33]">
+                </div>
+                <button id="pack-send-btn" class="w-full py-3 bg-[#1F4B33] hover:bg-[#183c29] text-white text-xs font-bold rounded-xl transition shadow-md flex items-center justify-center gap-2">
+                    <i data-lucide="send" class="w-4 h-4"></i> Send Order to Kiduuka
+                </button>
+                <div id="pack-result-msg" class="hidden text-xs font-medium text-center p-2 rounded-xl"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- JAVASCRIPT LOGIC -->
+    <script>
+        // Supabase Initialization
+        const SUPABASE_URL = 'https://daltkftifbepwsvtxjpb.supabase.co';
+        const SUPABASE_ANON_KEY = 'sb_publishable_qUGLwQYXXZZXZYCcgA00tw_N68PBV_n';
+        const supabaseClient = window.supabase ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY) : null;
+
+        // Global State Object
+        const state = {
+            page: 'catalog',
+            listings: [],
+            loadingCatalog: true,
+            search: '',
+            currentUser: null,
+            authMode: 'login',
+            showPw: false,
+            pack: [],
+            packOpen: false,
+            viewer: { item: null, index: 0 },
+            uploadPreviews: [],
+            uploadFiles: []
+        };
+
+        // Marketing Module
+        const MarketingModule = {
+            budgetBaseline: 20000,
+            channels: [
+                { name: 'WhatsApp Broadcasts', share: 0.40 },
+                { name: 'TikTok / Reels Showcase', share: 0.35 },
+                { name: 'Direct Kiduuka Sharing', share: 0.25 }
+            ],
+            getDailyBreakdown() {
+                return this.channels.map(c => ({
+                    name: c.name,
+                    allocation: c.share * this.budgetBaseline
+                }));
+            },
+            logCampaignStatus() {
+                console.info('Marketing Module Active. Daily Baseline Budget:', formatUGX(this.budgetBaseline));
+            }
+        };
+
+        // Minor Receivers Module
+        const MinorReceiverModule = {
+            receivers: [
+                { name: 'Johamas Hub Alpha', phone: '0770000001' },
+                { name: 'Johamas Hub Beta', phone: '0770000002' },
+                { name: 'Johamas Hub Gamma', phone: '0770000003' }
+            ],
+            routeSplitOrder(orderPayload) {
+                const items = orderPayload.items || [];
+                const buckets = {};
+                this.receivers.forEach(r => buckets[r.name] = { receiver: r, items: [], subtotal: 0 });
+
+                items.forEach((item, index) => {
+                    const receiverObj = this.receivers[index % this.receivers.length];
+                    buckets[receiverObj.name].items.push(item);
+                    buckets[receiverObj.name].subtotal += getDisplayPrice(item.price);
+                });
+
+                return buckets;
+            }
+        };
+
+        // Major Receiver Component
+        const MajorReceiverComponent = {
+            async processIncomingPackOrder(packItemIds, buyerContact) {
+                if (!packItemIds || packItemIds.length === 0) throw new Error('Pack is empty');
+                
+                const items = packItemIds.map(id => state.listings.find(l => l.id === id)).filter(Boolean);
+                if (items.length === 0) throw new Error('No valid items found in pack');
+
+                const orderPayload = {
+                    buyer_contact: buyerContact,
+                    items: items,
+                    timestamp: new Date().toISOString()
+                };
+
+                const splitBuckets = MinorReceiverModule.routeSplitOrder(orderPayload);
+                const insertedRows = [];
+
+                if (supabaseClient) {
+                    for (const [receiverName, bucket] of Object.entries(splitBuckets)) {
+                        for (const item of bucket.items) {
+                            const { data, error } = await supabaseClient.from('orders').insert({
+                                listing_id: item.id,
+                                buyer_username: buyerContact,
+                                status: 'assigned',
+                                assigned_receiver: receiverName,
+                                total_price: getDisplayPrice(item.price)
+                            }).select();
+
+                            if (error) {
+                                console.warn('Supabase order insert error:', error.message);
+                            }
+                            if (data) insertedRows.push(...data);
+                        }
+                    }
+                }
+
+                AccountModule.trackBuyerInteraction({ contact: buyerContact, count: items.length, timestamp: orderPayload.timestamp });
+                return { splitBuckets, insertedRows };
+            }
+        };
+
+        // Account Management Module
+        const AccountModule = {
+            async deleteItemFromAccount(itemId) {
+                if (!state.currentUser) return;
+                state.listings = state.listings.filter(l => l.id !== itemId);
+                state.pack = state.pack.filter(id => id !== itemId);
+                localStorage.setItem('kiduuka_pack', JSON.stringify(state.pack));
+
+                if (supabaseClient) {
+                    await supabaseClient.from('listings').delete().match({ id: itemId, seller_username: state.currentUser.username });
+                }
+                render();
+            },
+            trackBuyerInteraction(interaction) {
+                const logs = JSON.parse(localStorage.getItem('buyer_tracking') || '[]');
+                logs.push({ ...interaction, date: new Date().toISOString() });
+                localStorage.setItem('buyer_tracking', JSON.stringify(logs));
+            }
+        };
+
+        // Core Utility & Processing Functions
+        async function sha256(message) {
+            const msgBuffer = new TextEncoder().encode(message);
+            const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
+            const hashArray = Array.from(new Uint8Array(hashBuffer));
+            return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+        }
+
+        function getExt(filename) {
+            const parts = filename.split('.');
+            return parts.length > 1 ? parts.pop().toLowerCase() : '';
+        }
+
+        async function resizeImageFile(file) {
+            return new Promise((resolve) => {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    const img = new Image();
+                    img.onload = () => {
+                        const canvas = document.createElement('canvas');
+                        let width = img.width;
+                        let height = img.height;
+                        const MAX_DIM = 900;
+
+                        if (width > height && width > MAX_DIM) {
+                            height = Math.round((height * MAX_DIM) / width);
+                            width = MAX_DIM;
+                        } else if (height > MAX_DIM) {
+                            width = Math.round((width * MAX_DIM) / height);
+                            height = MAX_DIM;
+                        }
+
+                        canvas.width = width;
+                        canvas.height = height;
+                        const ctx = canvas.getContext('2d');
+                        ctx.drawImage(img, 0, 0, width, height);
+                        resolve(canvas.toDataURL('image/jpeg', 0.72));
+                    };
+                    img.src = e.target.result;
+                };
+                reader.readAsDataURL(file);
+            });
+        }
+
+        function calculateFee(basePrice) {
+            if (basePrice >= 10000000) return 200000;
+            if (basePrice >= 1000000) return 100000;
+            if (basePrice >= 100000) return 50000;
+            if (basePrice >= 10000) return 5000;
+            if (basePrice >= 1000) return 500;
+            return 0;
+        }
+
+        function getDisplayPrice(basePrice) {
+            return Number(basePrice) + calculateFee(Number(basePrice));
+        }
+
+        function formatUGX(amount) {
+            return 'UGX ' + Number(amount).toLocaleString();
+        }
+
+        // Application Lifecycle & Event Listeners
+        async function initApp() {
+            MarketingModule.logCampaignStatus();
+
+            try {
+                if (supabaseClient) {
+                    const { data, error } = await supabaseClient.from('listings').select('*').order('created_at', { ascending: false });
+                    if (!error && data) state.listings = data;
+                }
+            } catch (err) {
+                console.warn('Supabase fetch offline mode:', err);
+            }
+
+            state.loadingCatalog = false;
+
+            const savedUser = localStorage.getItem('kiduuka_user');
+            if (savedUser) {
+                try {
+                    state.currentUser = JSON.parse(savedUser);
+                } catch (e) {
+                    localStorage.removeItem('kiduuka_user');
+                }
+            }
+
+            const savedPack = localStorage.getItem('kiduuka_pack');
+            if (savedPack) {
+                try {
+                    state.pack = JSON.parse(savedPack);
+                } catch (e) {
+                    state.pack = [];
+                }
+            }
+
+            render();
+            setupEventListeners();
+        }
+
+        function render() {
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                const tab = btn.getAttribute('data-tab');
+                if (tab === state.page) {
+                    btn.className = 'tab-btn flex-1 py-2 px-3 text-xs font-bold rounded-xl transition flex items-center justify-center gap-1.5 bg-[#241B14] text-white shadow-sm';
+                } else {
+                    btn.className = 'tab-btn flex-1 py-2 px-3 text-xs font-bold rounded-xl transition flex items-center justify-center gap-1.5 text-[#5b4d3a] hover:bg-[#EFE6D4]';
+                }
+            });
+
+            document.querySelectorAll('.tab-content').forEach(section => {
+                section.classList.add('hidden');
+            });
+            const activeSection = document.getElementById(`view-${state.page}`);
+            if (activeSection) activeSection.classList.remove('hidden');
+
+            const packBadge = document.getElementById('pack-badge');
+            if (state.pack.length > 0) {
+                packBadge.textContent = state.pack.length;
+                packBadge.classList.remove('hidden');
+            } else {
+                packBadge.classList.add('hidden');
+            }
+
+            const authHeaderContainer = document.getElementById('auth-header-container');
+            if (state.currentUser) {
+                authHeaderContainer.innerHTML = `
+                    <button onclick="switchTab('account')" class="flex items-center gap-1.5 px-3 py-1 bg-white/10 hover:bg-white/20 text-white text-xs font-bold rounded-full transition">
+                        <i data-lucide="user" class="w-3.5 h-3.5 text-[#E8A93D]"></i>
+                        <span class="max-w-[80px] truncate">@${state.currentUser.username}</span>
+                    </button>
+                `;
+            } else {
+                authHeaderContainer.innerHTML = `
+                    <button id="auth-trigger-btn" onclick="openAuthModal('login')" class="px-3.5 py-1.5 bg-[#E8A93D] hover:bg-[#d89932] text-[#24170F] text-xs font-bold rounded-full transition shadow-sm">
+                        Log in
+                    </button>
+                `;
+            }
+
+            renderCatalog();
+            renderAccount();
+            renderPackDrawer();
+
+            if (window.lucide) {
+                window.lucide.createIcons();
+            }
+        }
+
+        function switchTab(tabName) {
+            state.page = tabName;
+            render();
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function renderCatalog() {
+            const loadingEl = document.getElementById('catalog-loading');
+            const emptyEl = document.getElementById('catalog-empty');
+            const gridEl = document.getElementById('catalog-grid');
+
+            if (state.loadingCatalog) {
+                loadingEl.classList.remove('hidden');
+                emptyEl.classList.add('hidden');
+                gridEl.innerHTML = '';
+                return;
+            }
+
+            loadingEl.classList.add('hidden');
+
+            const filtered = state.listings.filter(item => {
+                const query = state.search.toLowerCase();
+                return !query || (item.title && item.title.toLowerCase().includes(query)) || (item.seller_username && item.seller_username.toLowerCase().includes(query));
+            });
+
+            if (filtered.length === 0) {
+                emptyEl.classList.remove('hidden');
+                gridEl.innerHTML = '';
+                return;
+            }
+
+            emptyEl.classList.add('hidden');
+            gridEl.innerHTML = filtered.map(item => {
+                const inPack = state.pack.includes(item.id);
+                // Marketplace shows the increased display price (base + fee)
+                const displayP = getDisplayPrice(item.price);
+                const primaryImg = (item.images && item.images.length > 0) ? item.images[0] : null;
+                const extraCount = item.images && item.images.length > 1 ? item.images.length - 1 : 0;
+
+                return `
+                    <div class="bg-[#F6EEDD] border-2 border-[#24170F]/10 rounded-2xl overflow-hidden flex flex-col justify-between shadow-sm hover:border-[#1F4B33]/30 transition">
+                        <div>
+                            <div class="h-48 sm:h-52 bg-[#EFE6D4] relative cursor-pointer group" onclick="openImageViewer('${item.id}', 0)">
+                                ${primaryImg ? `<img src="${primaryImg}" alt="${item.title}" class="w-full h-full object-cover">` : `<div class="w-full h-full flex items-center justify-center text-[#8A7A63]"><i data-lucide="image" class="w-8 h-8"></i></div>`}
+                                ${extraCount > 0 ? `<span class="absolute bottom-2 right-2 bg-black/60 text-white text-[10px] font-bold px-2 py-0.5 rounded-full backdrop-blur-sm">+${extraCount} more</span>` : ''}
+                            </div>
+                            <div class="p-3">
+                                <h4 class="text-xs font-bold text-[#24170F] line-clamp-2">${item.title}</h4>
+                                <div class="mt-2 flex items-baseline justify-between">
+                                    <span class="text-xs font-extrabold font-mono-custom text-[#1F4B33]">${formatUGX(displayP)}</span>
+                                    <span class="text-[10px] font-mono-custom text-[#C1502E]">fee inc.</span>
+                                </div>
+                                <p class="text-[10px] text-[#8A7A63] mt-1 truncate">@${item.seller_username || 'vendor'}</p>
+                            </div>
+                        </div>
+                        <div class="p-3 pt-0">
+                            <button onclick="togglePackItem('${item.id}')" class="w-full py-2 px-3 text-[11px] font-bold rounded-xl transition flex items-center justify-center gap-1.5 ${inPack ? 'bg-[#1F4B33] text-white' : 'bg-[#EFE6D4] hover:bg-[#1F4B33] hover:text-white text-[#24170F]'}">
+                                <i data-lucide="${inPack ? 'check' : 'shopping-bag'}" class="w-3.5 h-3.5"></i>
+                                ${inPack ? 'In your pack' : 'Add to pack'}
+                            </button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function renderAccount() {
+            const loggedOutEl = document.getElementById('account-logged-out');
+            const loggedInEl = document.getElementById('account-logged-in');
+
+            if (!state.currentUser) {
+                loggedOutEl.classList.remove('hidden');
+                loggedInEl.classList.add('hidden');
+                return;
+            }
+
+            loggedOutEl.classList.add('hidden');
+            loggedInEl.classList.remove('hidden');
+
+            document.getElementById('account-username').textContent = '@' + state.currentUser.username;
+            document.getElementById('account-phone').textContent = state.currentUser.phone || 'No phone set';
+
+            const userListings = state.listings.filter(l => l.seller_username === state.currentUser.username);
+            document.getElementById('account-listings-heading').textContent = `Your Listings (${userListings.length})`;
+
+            const listingsGrid = document.getElementById('account-listings-grid');
+            if (userListings.length === 0) {
+                listingsGrid.innerHTML = `<p class="col-span-full text-xs text-[#8A7A63] py-4 text-center">You haven't listed any items yet.</p>`;
+            } else {
+                listingsGrid.innerHTML = userListings.map(item => {
+                    const primaryImg = (item.images && item.images.length > 0) ? item.images[0] : null;
+                    // Account view shows the exact original uploaded base price without any fee increase
+                    const exactUploadedPrice = Number(item.price);
+
+                    return `
+                        <div class="bg-white border border-[#24170F]/10 rounded-2xl overflow-hidden flex flex-col justify-between shadow-sm">
+                            <div class="h-36 bg-[#EFE6D4] relative">
+                                ${primaryImg ? `<img src="${primaryImg}" alt="${item.title}" class="w-full h-full object-cover">` : `<div class="w-full h-full flex items-center justify-center text-[#8A7A63]"><i data-lucide="image" class="w-6 h-6"></i></div>`}
+                            </div>
+                            <div class="p-2.5">
+                                <h4 class="text-xs font-bold text-[#24170F] truncate">${item.title}</h4>
+                                <p class="text-xs font-extrabold font-mono-custom text-[#1F4B33] mt-1">${formatUGX(exactUploadedPrice)}</p>
+                                <span class="text-[9px] text-[#8A7A63]">Exact uploaded amount</span>
+                            </div>
+                            <div class="p-2.5 pt-0">
+                                <button onclick="AccountModule.deleteItemFromAccount('${item.id}')" class="w-full py-1.5 bg-[#C1502E]/10 hover:bg-[#C1502E] hover:text-white text-[#C1502E] text-[10px] font-bold rounded-lg transition flex items-center justify-center gap-1">
+                                    <i data-lucide="trash-2" class="w-3 h-3"></i> Delete item
+                                </button>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            }
+        }
+
+        function renderPackDrawer() {
+            const drawerWrapper = document.getElementById('pack-drawer-wrapper');
+            const drawer = document.getElementById('pack-drawer');
+            const packItemsList = document.getElementById('pack-items-list');
+            const packTotalPrice = document.getElementById('pack-total-price');
+
+            if (state.packOpen) {
+                drawerWrapper.classList.remove('hidden');
+                setTimeout(() => {
+                    drawerWrapper.classList.remove('opacity-0');
+                    drawer.classList.remove('translate-x-full');
+                }, 10);
+            } else {
+                drawerWrapper.classList.add('opacity-0');
+                drawer.classList.add('translate-x-full');
+                setTimeout(() => {
+                    drawerWrapper.classList.add('hidden');
+                }, 300);
+            }
+
+            const packItems = state.pack.map(id => state.listings.find(l => l.id === id)).filter(Boolean);
+            let total = 0;
+
+            if (packItems.length === 0) {
+                packItemsList.innerHTML = `
+                    <div class="text-center py-16 text-[#8A7A63]">
+                        <i data-lucide="shopping-bag" class="w-10 h-10 mx-auto mb-2 opacity-40"></i>
+                        <p class="text-xs font-medium">Your pack is empty</p>
+                    </div>
+                `;
+            } else {
+                packItemsList.innerHTML = packItems.map(item => {
+                    const price = getDisplayPrice(item.price);
+                    total += price;
+                    const primaryImg = (item.images && item.images.length > 0) ? item.images[0] : null;
+                    return `
+                        <div class="flex items-center justify-between bg-white p-3 rounded-xl border border-[#24170F]/10 shadow-sm">
+                            <div class="flex items-center gap-3">
+                                <div class="w-12 h-12 bg-[#EFE6D4] rounded-lg overflow-hidden flex-shrink-0">
+                                    ${primaryImg ? `<img src="${primaryImg}" alt="" class="w-full h-full object-cover">` : `<i data-lucide="image" class="w-5 h-5 m-auto text-[#8A7A63]"></i>`}
+                                </div>
+                                <div>
+                                    <h4 class="text-xs font-bold text-[#24170F] line-clamp-1">${item.title}</h4>
+                                    <p class="text-xs font-mono-custom font-extrabold text-[#1F4B33] mt-0.5">${formatUGX(price)}</p>
+                                </div>
+                            </div>
+                            <button onclick="togglePackItem('${item.id}')" class="p-2 text-[#C1502E] hover:bg-[#C1502E]/10 rounded-lg transition">
+                                <i data-lucide="trash-2" class="w-4 h-4"></i>
+                            </button>
+                        </div>
+                    `;
+                }).join('');
+            }
+
+            packTotalPrice.textContent = formatUGX(total);
+        }
+
+        function togglePackItem(id) {
+            const idx = state.pack.indexOf(id);
+            if (idx > -1) {
+                state.pack.splice(idx, 1);
+            } else {
+                state.pack.push(id);
+            }
+            localStorage.setItem('kiduuka_pack', JSON.stringify(state.pack));
+            render();
+        }
+
+        function openAuthModal(mode) {
+            state.authMode = mode;
+            const modal = document.getElementById('auth-modal');
+            const title = document.getElementById('auth-modal-title');
+            const phoneContainer = document.getElementById('auth-phone-container');
+            const submitBtn = document.getElementById('auth-submit-btn');
+            const switchBtn = document.getElementById('auth-switch-btn');
+            const errorDiv = document.getElementById('auth-error');
+
+            errorDiv.classList.add('hidden');
+            errorDiv.textContent = '';
+
+            if (mode === 'register') {
+                title.textContent = 'Open a Kiduuka account';
+                phoneContainer.classList.remove('hidden');
+                submitBtn.textContent = 'Register Account';
+                switchBtn.innerHTML = `Already have an account? <span class="text-[#E8A93D] font-bold underline">Log in</span>`;
+            } else {
+                title.textContent = 'Log in';
+                phoneContainer.classList.add('hidden');
+                submitBtn.textContent = 'Log in';
+                switchBtn.innerHTML = `Don't have an account? <span class="text-[#E8A93D] font-bold underline">Register</span>`;
+            }
+
+            modal.classList.remove('hidden');
+        }
+
+        function closeAuthModal() {
+            document.getElementById('auth-modal').classList.add('hidden');
+        }
+
+        function openImageViewer(itemId, index) {
+            const item = state.listings.find(l => l.id === itemId);
+            if (!item || !item.images || item.images.length === 0) return;
+            state.viewer = { item, index };
+
+            const viewer = document.getElementById('image-viewer');
+            viewer.classList.remove('hidden');
+            updateImageViewerContent();
+        }
+
+        function updateImageViewerContent() {
+            const { item, index } = state.viewer;
+            const img = document.getElementById('viewer-img');
+            const dots = document.getElementById('viewer-dots');
+            const prevBtn = document.getElementById('viewer-prev');
+            const nextBtn = document.getElementById('viewer-next');
+
+            img.src = item.images[index];
+
+            if (item.images.length > 1) {
+                prevBtn.classList.remove('hidden');
+                nextBtn.classList.remove('hidden');
+                dots.innerHTML = item.images.map((_, i) => `
+                    <div class="h-1.5 rounded-full transition-all ${i === index ? 'w-6 bg-[#E8A93D]' : 'w-1.5 bg-white/40'}"></div>
+                `).join('');
+            } else {
+                prevBtn.classList.add('hidden');
+                nextBtn.classList.add('hidden');
+                dots.innerHTML = '';
+            }
+        }
+
+        function setupEventListeners() {
+            document.getElementById('search-input').addEventListener('input', (e) => {
+                state.search = e.target.value;
+                renderCatalog();
+            });
+
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    switchTab(btn.getAttribute('data-tab'));
+                });
+            });
+
+            document.getElementById('open-pack-btn').addEventListener('click', () => {
+                state.packOpen = true;
+                renderPackDrawer();
+            });
+            document.getElementById('pack-close-btn').addEventListener('click', () => {
+                state.packOpen = false;
+                renderPackDrawer();
+            });
+            document.getElementById('pack-backdrop').addEventListener('click', () => {
+                state.packOpen = false;
+                renderPackDrawer();
+            });
+
+            document.getElementById('pack-send-btn').addEventListener('click', async () => {
+                const contactInput = document.getElementById('pack-input-contact') || document.getElementById('pack-contact-input');
+                const contact = contactInput ? contactInput.value.trim() : '';
+                const resultMsg = document.getElementById('pack-result-msg');
+
+                if (!contact || contact.length < 9) {
+                    resultMsg.textContent = 'Please enter a valid phone number.';
+                    resultMsg.className = 'text-xs font-medium text-center p-2 rounded-xl bg-[#C1502E]/10 text-[#C1502E]';
+                    resultMsg.classList.remove('hidden');
+                    return;
+                }
+
+                try {
+                    resultMsg.textContent = 'Processing order through Kiduuka hub...';
+                    resultMsg.className = 'text-xs font-medium text-center p-2 rounded-xl bg-[#1F4B33]/10 text-[#1F4B33]';
+                    resultMsg.classList.remove('hidden');
+
+                    await MajorReceiverComponent.processIncomingPackOrder(state.pack, contact);
+
+                    resultMsg.textContent = 'Order successfully routed to Kiduuka hubs!';
+                    state.pack = [];
+                    localStorage.removeItem('kiduuka_pack');
+                    setTimeout(() => {
+                        state.packOpen = false;
+                        render();
+                    }, 1800);
+                } catch (err) {
+                    resultMsg.textContent = err.message || 'Error processing order.';
+                    resultMsg.className = 'text-xs font-medium text-center p-2 rounded-xl bg-[#C1502E]/10 text-[#C1502E]';
+                }
+            });
+
+            const authTrigger = document.getElementById('auth-trigger-btn');
+            if (authTrigger) authTrigger.addEventListener('click', () => openAuthModal('login'));
+            const accLoginTrigger = document.getElementById('account-login-trigger');
+            if (accLoginTrigger) accLoginTrigger.addEventListener('click', () => openAuthModal('login'));
+            document.getElementById('auth-close-btn').addEventListener('click', closeAuthModal);
+            document.getElementById('auth-switch-btn').addEventListener('click', () => {
+                openAuthModal(state.authMode === 'login' ? 'register' : 'login');
+            });
+
+            document.getElementById('auth-toggle-pw').addEventListener('click', () => {
+                state.showPw = !state.showPw;
+                const pwInput = document.getElementById('auth-password');
+                pwInput.type = state.showPw ? 'text' : 'password';
+            });
+
+            document.getElementById('auth-form').addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const username = document.getElementById('auth-username').value.trim();
+                const password = document.getElementById('auth-password').value;
+                const phone = document.getElementById('auth-phone').value.trim();
+                const errorDiv = document.getElementById('auth-error');
+
+                if (!username || !password) {
+                    errorDiv.textContent = 'Please fill in all required fields.';
+                    errorDiv.classList.remove('hidden');
+                    return;
+                }
+
+                const pwHash = await sha256(password);
+
+                if (state.authMode === 'register') {
+                    if (!phone) {
+                        errorDiv.textContent = 'Phone number is required for registration.';
+                        errorDiv.classList.remove('hidden');
+                        return;
+                    }
+                    const newUser = { username, phone, password_hash: pwHash, created_at: new Date().toISOString() };
+                    state.currentUser = newUser;
+                    localStorage.setItem('kiduuka_user', JSON.stringify(newUser));
+
+                    if (supabaseClient) {
+                        await supabaseClient.from('profiles').insert(newUser);
+                    }
+                    closeAuthModal();
+                    render();
+                } else {
+                    const storedUser = JSON.parse(localStorage.getItem('kiduuka_user') || 'null');
+                    if (storedUser && storedUser.username === username && storedUser.password_hash === pwHash) {
+                        state.currentUser = storedUser;
+                        closeAuthModal();
+                        render();
+                    } else {
+                        const loggedUser = { username, phone: '0700000000', password_hash: pwHash };
+                        state.currentUser = loggedUser;
+                        localStorage.setItem('kiduuka_user', JSON.stringify(loggedUser));
+                        closeAuthModal();
+                        render();
+                    }
+                }
+            });
+
+            document.getElementById('logout-btn').addEventListener('click', () => {
+                state.currentUser = null;
+                localStorage.removeItem('kiduuka_user');
+                render();
+            });
+
+            document.getElementById('init-delete-btn').addEventListener('click', () => {
+                document.getElementById('danger-zone-confirm').classList.remove('hidden');
+            });
+            document.getElementById('cancel-delete-btn').addEventListener('click', () => {
+                document.getElementById('danger-zone-confirm').classList.add('hidden');
+            });
+            document.getElementById('confirm-delete-btn').addEventListener('click', () => {
+                if (state.currentUser) {
+                    state.listings = state.listings.filter(l => l.seller_username !== state.currentUser.username);
+                    state.currentUser = null;
+                    localStorage.removeItem('kiduuka_user');
+                    switchTab('catalog');
+                }
+            });
+
+            const dropzone = document.getElementById('dropzone');
+            const fileInput = document.getElementById('file-input');
+
+            dropzone.addEventListener('click', () => fileInput.click());
+            dropzone.addEventListener('dragover', (e) => { e.preventDefault(); dropzone.classList.add('border-[#1F4B33]'); });
+            dropzone.addEventListener('dragleave', () => dropzone.classList.remove('border-[#1F4B33]'));
+            dropzone.addEventListener('drop', async (e) => {
+                e.preventDefault();
+                dropzone.classList.remove('border-[#1F4B33]');
+                if (e.dataTransfer.files) handleSelectedFiles(e.dataTransfer.files);
+            });
+            fileInput.addEventListener('change', (e) => {
+                if (e.target.files) handleSelectedFiles(e.target.files);
+            });
+
+            document.getElementById('upload-form').addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const title = document.getElementById('upload-title').value.trim();
+                const price = Number(document.getElementById('upload-price').value);
+                const errorEl = document.getElementById('upload-error');
+                const successEl = document.getElementById('upload-success');
+
+                errorEl.classList.add('hidden');
+                successEl.classList.add('hidden');
+
+                if (!state.currentUser) {
+                    errorEl.textContent = 'You must be logged in to publish listings.';
+                    errorEl.classList.remove('hidden');
+                    return;
+                }
+                if (!title) {
+                    errorEl.textContent = 'Please enter a product title.';
+                    errorEl.classList.remove('hidden');
+                    return;
+                }
+                if (!price || isNaN(price) || price <= 0) {
+                    errorEl.textContent = 'Please enter a valid numeric base price in UGX.';
+                    errorEl.classList.remove('hidden');
+                    return;
+                }
+                if (state.uploadPreviews.length === 0) {
+                    errorEl.textContent = 'Please upload at least one image.';
+                    errorEl.classList.remove('hidden');
+                    return;
+                }
+
+                const newItem = {
+                    id: 'item-' + Date.now(),
+                    title,
+                    price,
+                    seller_username: state.currentUser.username,
+                    images: [...state.uploadPreviews],
+                    created_at: new Date().toISOString()
+                };
+
+                state.listings.unshift(newItem);
+
+                if (supabaseClient) {
+                    await supabaseClient.from('listings').insert(newItem);
+                }
+
+                successEl.textContent = 'Listing published successfully!';
+                successEl.classList.remove('hidden');
+
+                document.getElementById('upload-form').reset();
+                state.uploadPreviews = [];
+                state.uploadFiles = [];
+                document.getElementById('upload-previews').classList.add('hidden');
+                document.getElementById('upload-previews').innerHTML = '';
+
+                setTimeout(() => {
+                    switchTab('catalog');
+                }, 1200);
+            });
+
+            document.getElementById('viewer-close-btn').addEventListener('click', () => {
+                document.getElementById('image-viewer').classList.add('hidden');
+            });
+            document.getElementById('image-viewer').addEventListener('click', (e) => {
+                if (e.target.id === 'image-viewer') {
+                    document.getElementById('image-viewer').classList.add('hidden');
+                }
+            });
+            document.getElementById('viewer-prev').addEventListener('click', () => {
+                if (!state.viewer.item) return;
+                const len = state.viewer.item.images.length;
+                state.viewer.index = (state.viewer.index - 1 + len) % len;
+                updateImageViewerContent();
+            });
+            document.getElementById('viewer-next').addEventListener('click', () => {
+                if (!state.viewer.item) return;
+                const len = state.viewer.item.images.length;
+                state.viewer.index = (state.viewer.index + 1) % len;
+                updateImageViewerContent();
+            });
+
+            window.addEventListener('keydown', (e) => {
+                const viewer = document.getElementById('image-viewer');
+                if (!viewer.classList.contains('hidden')) {
+                    if (e.key === 'Escape') viewer.classList.add('hidden');
+                    if (e.key === 'ArrowLeft') document.getElementById('viewer-prev').click();
+                    if (e.key === 'ArrowRight') document.getElementById('viewer-next').click();
+                }
+            });
+        }
+
+        async function handleSelectedFiles(fileList) {
+            const acceptedExts = ['jpg', 'jpeg', 'png', 'webp', 'gif'];
+            const errorEl = document.getElementById('upload-error');
+            errorEl.classList.add('hidden');
+
+            for (let file of fileList) {
+                const ext = getExt(file.name);
+                if (!acceptedExts.includes(ext)) {
+                    errorEl.textContent = `Unsupported file type: .${ext}. Use JPG, PNG, WEBP, or GIF.`;
+                    errorEl.classList.remove('hidden');
+                    continue;
+                }
+                state.uploadFiles.push(file);
+                const resizedDataUrl = await resizeImageFile(file);
+                state.uploadPreviews.push(resizedDataUrl);
+            }
+
+            renderUploadPreviews();
+        }
+
+        function renderUploadPreviews() {
+            const container = document.getElementById('upload-previews');
+            if (state.uploadPreviews.length === 0) {
+                container.classList.add('hidden');
+                container.innerHTML = '';
+                return;
+            }
+
+            container.classList.remove('hidden');
+            container.innerHTML = state.uploadPreviews.map((url, idx) => `
+                <div class="relative h-20 bg-[#EFE6D4] rounded-xl overflow-hidden border border-[#24170F]/10 group">
+                    <img src="${url}" alt="" class="w-full h-full object-cover">
+                    <button type="button" onclick="removeUploadPreview(${idx})" class="absolute top-1 right-1 bg-black/70 text-white p-1 rounded-full opacity-0 group-hover:opacity-100 transition">
+                        <i data-lucide="x" class="w-3 h-3"></i>
+                    </button>
+                </div>
+            `).join('');
+
+            if (window.lucide) window.lucide.createIcons();
+        }
+
+        function removeUploadPreview(idx) {
+            state.uploadPreviews.splice(idx, 1);
+            state.uploadFiles.splice(idx, 1);
+            renderUploadPreviews();
+        }
+
+        window.addEventListener('DOMContentLoaded', initApp);
+    </script>
+</body>
+</html>
+7
