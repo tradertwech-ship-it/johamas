@@ -1,0 +1,724 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Joha Online Market | Hybrid Managed Marketplace</title>
+    <!-- Tailwind CSS CDN for styling -->
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+</head>
+<body class="bg-slate-50 text-slate-900 min-h-screen flex flex-col font-sans">
+
+    <!-- Top Header Navigation -->
+    <header class="bg-slate-900 text-white shadow-md sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 py-3 flex flex-col sm:flex-row justify-between items-center gap-4">
+            <div class="flex items-center space-x-2">
+                <span class="text-2xl font-black text-amber-400 tracking-wider">JOHA</span>
+                <span class="text-xs bg-amber-500 text-slate-950 px-2 py-0.5 rounded font-bold uppercase">Online Market</span>
+            </div>
+
+            <!-- Role Switcher -->
+            <nav class="flex bg-slate-800 p-1 rounded-lg border border-slate-700 text-sm font-medium">
+                <button onclick="switchRole('customer')" id="nav-customer" class="px-4 py-1.5 rounded-md transition bg-amber-500 text-slate-950 font-bold cursor-pointer">Customer Storefront</button>
+                <button onclick="switchRole('vendor')" id="nav-vendor" class="px-4 py-1.5 rounded-md transition text-slate-300 hover:text-white cursor-pointer">Vendor Portal</button>
+                <button onclick="switchRole('admin')" id="nav-admin" class="px-4 py-1.5 rounded-md transition text-slate-300 hover:text-white cursor-pointer">Admin Dashboard</button>
+            </nav>
+        </div>
+    </header>
+
+    <!-- Main Workspace Container -->
+    <main class="flex-1 max-w-7xl w-full mx-auto px-4 py-6 space-y-8">
+
+        <!-- ================= 1. CUSTOMER STOREFRONT (OPEN TO ALL) ================= -->
+        <section id="view-customer" class="space-y-6">
+            <div class="bg-gradient-to-r from-amber-500 to-amber-600 p-6 rounded-2xl text-slate-950 shadow-lg">
+                <h1 class="text-3xl font-extrabold mb-2">Shop Safely with Joha Logistics</h1>
+                <p class="text-sm font-medium max-w-xl">
+                    Direct vendor pricing combined with guaranteed physical inspection, fast delivery, and secure escrow handling. No account required to buy!
+                </p>
+            </div>
+
+            <h2 class="text-xl font-bold text-slate-800">Available Marketplace Products</h2>
+            <div id="customer-product-grid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
+                <!-- Dynamically populated by JS -->
+            </div>
+        </section>
+
+        <!-- ================= 2. PROTECTED VENDOR PORTAL ================= -->
+        <section id="view-vendor" class="hidden space-y-6">
+            <!-- Sub-view A: Authentication Screen (Shown if logged out) -->
+            <div id="vendor-auth-container" class="max-w-md mx-auto bg-white p-8 rounded-2xl border border-slate-200 shadow-sm mt-10">
+                <div class="text-center mb-6">
+                    <span class="text-xs bg-amber-100 text-amber-800 font-bold px-3 py-1 rounded-full uppercase">Vendor Access Required</span>
+                    <h2 id="auth-title" class="text-2xl font-black text-slate-900 mt-2">Vendor Sign In</h2>
+                    <p id="auth-subtitle" class="text-xs text-slate-500 mt-1">Manage your shop, upload products, and track sales.</p>
+                </div>
+
+                <form id="vendor-auth-form" onsubmit="handleVendorAuthSubmit(event)" class="space-y-4">
+                    <div id="field-name-container" class="hidden">
+                        <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Full Name / Business Name</label>
+                        <input type="text" id="auth-name" placeholder="e.g. John Electronics" class="w-full border border-slate-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-amber-500 outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Phone Number</label>
+                        <input type="text" id="auth-phone" required placeholder="+256 700 000000" class="w-full border border-slate-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-amber-500 outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Password</label>
+                        <div class="relative">
+                            <input type="password" id="auth-password" required placeholder="••••••••" class="w-full border border-slate-300 rounded-lg p-2.5 pr-10 text-sm focus:ring-2 focus:ring-amber-500 outline-none">
+                            <button type="button" onclick="togglePasswordVisibility('auth-password', 'eye-btn')" class="absolute inset-y-0 right-0 px-3 flex items-center text-slate-400 hover:text-slate-600 cursor-pointer text-sm font-bold" id="eye-btn">👁</button>
+                        </div>
+                        <p id="password-hint" class="text-[10px] text-slate-400 mt-1 hidden">Must be 8+ chars, with uppercase, lowercase & number.</p>
+                    </div>
+
+                    <button type="submit" id="auth-submit-btn" class="w-full bg-slate-900 hover:bg-slate-800 text-white font-bold py-3 rounded-lg text-sm transition shadow-sm cursor-pointer">
+                        Sign In to Portal
+                    </button>
+                </form>
+
+                <div class="text-center mt-6 pt-4 border-t border-slate-100 text-xs">
+                    <span id="auth-toggle-text" class="text-slate-500">Don't have a vendor account?</span>
+                    <button onclick="toggleAuthMode()" id="auth-toggle-btn" class="text-amber-600 font-bold ml-1 hover:underline cursor-pointer">Sign Up</button>
+                </div>
+            </div>
+
+            <!-- Sub-view B: Vendor Dashboard (Shown only if logged in) -->
+            <div id="vendor-dashboard-container" class="hidden space-y-8">
+                <div class="flex justify-between items-center bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
+                    <div>
+                        <span class="text-xs bg-amber-100 text-amber-800 font-bold px-2.5 py-1 rounded-full uppercase">Vendor Portal Active</span>
+                        <h2 id="vendor-welcome-heading" class="text-lg font-bold text-slate-900 mt-1">Welcome</h2>
+                    </div>
+                    <button onclick="vendorLogout()" class="text-xs bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold px-4 py-2 rounded-lg transition cursor-pointer">Sign Out Vendor</button>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                    <!-- Left: Product Upload Wizard -->
+                    <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
+                        <h2 class="text-xl font-bold text-slate-900 mb-4">Product Upload Wizard</h2>
+                        <form id="upload-form" onsubmit="handleProductUpload(event)" class="space-y-4">
+                            <div>
+                                <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Product Name</label>
+                                <input type="text" id="up-name" required placeholder="e.g. Smart Watch Series 8" class="w-full border border-slate-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-amber-500 outline-none">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Category</label>
+                                <select id="up-category" class="w-full border border-slate-300 rounded-lg p-2.5 text-sm bg-white focus:ring-2 focus:ring-amber-500 outline-none">
+                                    <option value="Electronics">Electronics</option>
+                                    <option value="Home Appliances">Home Appliances</option>
+                                    <option value="Fashion">Fashion & Clothing</option>
+                                    <option value="Phones">Phones & Accessories</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Product Image URL</label>
+                                <input type="url" id="up-image" required placeholder="https://example.com/image.jpg" class="w-full border border-slate-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-amber-500 outline-none">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Vendor Base Price (UGX)</label>
+                                <input type="number" id="up-baseprice" required oninput="updateLivePricingPreview()" placeholder="e.g. 25000" class="w-full border border-slate-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-amber-500 outline-none">
+                            </div>
+
+                            <!-- Live Pricing Preview Box -->
+                            <div class="bg-slate-50 p-4 rounded-lg border border-slate-200 space-y-2">
+                                <h4 class="text-xs font-bold text-slate-500 uppercase tracking-wider">Live Pricing Preview</h4>
+                                <div class="flex justify-between text-sm">
+                                    <span>Your Base Payout:</span>
+                                    <span id="preview-base" class="font-semibold text-slate-800">UGX 0</span>
+                                </div>
+                                <div class="flex justify-between text-sm">
+                                    <span>Joha Markup Fee:</span>
+                                    <span id="preview-markup" class="font-semibold text-amber-600">+ UGX 0</span>
+                                </div>
+                                <div class="flex justify-between text-sm pt-2 border-t border-slate-200 font-bold">
+                                    <span>Customer Display Price:</span>
+                                    <span id="preview-customer" class="text-slate-900">UGX 0</span>
+                                </div>
+                            </div>
+
+                            <button type="submit" class="w-full bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold py-3 rounded-lg text-sm transition shadow-sm cursor-pointer">
+                                Publish Product Live
+                            </button>
+                        </form>
+                    </div>
+
+                    <!-- Right: Vendor Incoming Sales -->
+                    <div class="lg:col-span-2 bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
+                        <h3 class="text-lg font-bold mb-4 text-slate-900">Incoming Sales & Live Orders</h3>
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left text-sm text-slate-600">
+                                <thead class="bg-slate-100 text-slate-700 uppercase text-xs">
+                                    <tr>
+                                        <th class="p-3">Order ID</th>
+                                        <th class="p-3">Product</th>
+                                        <th class="p-3">Base Payout</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="vendor-orders-table" class="divide-y divide-slate-200">
+                                    <!-- Populated by JS -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Vendor's Uploaded Items Section -->
+                <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm space-y-4">
+                    <h3 class="text-lg font-bold text-slate-900">Your Uploaded Products Inventory</h3>
+                    <div id="vendor-inventory-grid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+                        <!-- Populated by JS -->
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ================= 3. ADMIN DASHBOARD ================= -->
+        <section id="view-admin" class="hidden space-y-6">
+            <!-- Sub-view A: Admin Auth Screen -->
+            <div id="admin-auth-container" class="max-w-md mx-auto bg-white p-8 rounded-2xl border border-slate-200 shadow-sm mt-10">
+                <div class="text-center mb-6">
+                    <span class="text-xs bg-red-100 text-red-800 font-bold px-3 py-1 rounded-full uppercase">Restricted Area</span>
+                    <h2 class="text-2xl font-black text-slate-900 mt-2">Administrator Sign In</h2>
+                    <p class="text-xs text-slate-500 mt-1">Enter your permanent administrator password to proceed.</p>
+                </div>
+
+                <form onsubmit="handleAdminAuthSubmit(event)" class="space-y-4">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Admin Password</label>
+                        <div class="relative">
+                            <input type="password" id="admin-auth-password" required placeholder="••••••••" class="w-full border border-slate-300 rounded-lg p-2.5 pr-10 text-sm focus:ring-2 focus:ring-amber-500 outline-none">
+                            <button type="button" onclick="togglePasswordVisibility('admin-auth-password', 'admin-eye-btn')" class="absolute inset-y-0 right-0 px-3 flex items-center text-slate-400 hover:text-slate-600 cursor-pointer text-sm font-bold" id="admin-eye-btn">👁</button>
+                        </div>
+                    </div>
+
+                    <button type="submit" class="w-full bg-slate-900 hover:bg-slate-800 text-white font-bold py-3 rounded-lg text-sm transition shadow-sm cursor-pointer">
+                        Access Admin Panel
+                    </button>
+                </form>
+            </div>
+
+            <!-- Sub-view B: Admin Dashboard Content -->
+            <div id="admin-dashboard-container" class="hidden space-y-6">
+                <div class="flex justify-between items-center bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
+                    <div>
+                        <span class="text-xs bg-red-100 text-red-800 font-bold px-2.5 py-1 rounded-full uppercase">Administrator Mode</span>
+                        <h2 class="text-lg font-bold text-slate-900 mt-1">System Management Console</h2>
+                    </div>
+                    <button onclick="adminLogout()" class="text-xs bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold px-4 py-2 rounded-lg transition cursor-pointer">Sign Out Admin</button>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
+                        <span class="text-xs text-slate-500 font-semibold uppercase">Platform Net Markup Earnings</span>
+                        <h3 id="admin-markup" class="text-2xl font-black text-amber-600 mt-1">UGX 0</h3>
+                    </div>
+                    <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
+                        <span class="text-xs text-slate-500 font-semibold uppercase">Active Orders in Pipeline</span>
+                        <h3 id="admin-count" class="text-2xl font-black text-slate-900 mt-1">0</h3>
+                    </div>
+                </div>
+
+                <!-- Central Order Fulfillment Pipeline (Cards Grid) -->
+                <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm space-y-4">
+                    <h3 class="text-lg font-bold text-slate-900">Central Order Fulfillment Pipeline</h3>
+                    <div id="admin-orders-grid" class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <!-- Populated by JS -->
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- ================= CHECKOUT MODAL ================= -->
+    <div id="checkout-modal" class="hidden fixed inset-0 bg-slate-950/60 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+        <div class="bg-white max-w-md w-full rounded-2xl shadow-xl overflow-hidden border border-slate-200">
+            <div class="bg-slate-900 text-white p-4 flex justify-between items-center">
+                <h3 class="font-bold">Complete Your Purchase</h3>
+                <button onclick="closeCheckoutModal()" class="text-slate-400 hover:text-white font-bold text-lg cursor-pointer">&times;</button>
+            </div>
+            
+            <form onsubmit="handleCheckoutSubmit(event)" class="p-6 space-y-4">
+                <div class="bg-slate-50 p-3 rounded-lg border border-slate-100 mb-2">
+                    <p class="text-xs text-slate-500 font-semibold uppercase">Selected Item</p>
+                    <p id="modal-item-name" class="font-bold text-slate-900"></p>
+                    <p id="modal-item-price" class="text-sm font-black text-amber-600 mt-1"></p>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Full Name</label>
+                    <input type="text" id="chk-name" required placeholder="e.g. Sarah Namubiru" class="w-full border border-slate-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-amber-500 outline-none">
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Phone Number (Mobile Money)</label>
+                    <input type="text" id="chk-phone" required placeholder="+256 700 000000" class="w-full border border-slate-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-amber-500 outline-none">
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Physical Delivery Address</label>
+                    <input type="text" id="chk-address" required placeholder="Street / Building / Town" class="w-full border border-slate-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-amber-500 outline-none">
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Payment Choice</label>
+                    <select id="chk-payment" class="w-full border border-slate-300 rounded-lg p-2.5 text-sm bg-white focus:ring-2 focus:ring-amber-500 outline-none">
+                        <option value="Mobile Money">Mobile Money (MTN / Airtel)</option>
+                        <option value="Cash on Delivery">Cash on Delivery</option>
+                    </select>
+                </div>
+
+                <div class="flex space-x-3 pt-2">
+                    <button type="button" onclick="closeCheckoutModal()" class="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-700 py-3 rounded-lg text-sm font-bold transition cursor-pointer">Cancel</button>
+                    <button type="submit" class="flex-1 bg-slate-900 hover:bg-slate-800 text-white py-3 rounded-lg text-sm font-bold transition shadow-sm cursor-pointer">Confirm Order</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="bg-slate-900 text-slate-400 py-6 border-t border-slate-800 text-center text-xs mt-auto">
+        <p>&copy; 2026 Joha Online Market. Managed Hybrid Marketplace Architecture.</p>
+    </footer>
+
+    <!-- ================= JAVASCRIPT LOGIC ENGINE ================= -->
+    <script>
+        // State Database
+        let state = {
+            activeRole: 'customer',
+            isVendorLoggedIn: false,
+            isAdminLoggedIn: false,
+            adminPermanentPassword: '008145337',
+            authMode: 'signin', // 'signin' or 'signup'
+            currentVendor: null,
+            selectedProduct: null,
+            registeredVendors: [
+                { phone: '+256 700 123456', password: 'Password123', name: 'ElectroHub Kampala' }
+            ],
+            products: [
+                {
+                    id: 1,
+                    name: 'Wireless Bluetooth Earbuds Pro',
+                    category: 'Electronics',
+                    basePrice: 45000,
+                    customerPrice: 47500,
+                    markup: 2500,
+                    vendorName: 'ElectroHub Kampala',
+                    vendorPhone: '+256 700 123456',
+                    location: 'Downtown, Kampala',
+                    image: 'https://images.unsplash.com/photo-1572536147248-ac59a8abfa4b?w=400&q=80'
+                },
+                {
+                    id: 2,
+                    name: 'Smart Android TV Box 4K',
+                    category: 'Home Appliances',
+                    basePrice: 150000,
+                    customerPrice: 200000,
+                    markup: 50000,
+                    vendorName: 'TechGizmo Uganda',
+                    vendorPhone: '+256 772 987654',
+                    location: 'Ntinda, Kampala',
+                    image: 'https://images.unsplash.com/photo-1593784991095-a205069470b6?w=400&q=80'
+                }
+            ],
+            orders: [
+                {
+                    id: 'ORD-9821',
+                    productName: 'Wireless Bluetooth Earbuds Pro',
+                    customerName: 'Alex Mukasa',
+                    phone: '+256 755 111222',
+                    address: 'Plot 15, Jinja Road, Kampala',
+                    paymentMethod: 'Mobile Money',
+                    status: 'Pending',
+                    total: 47500,
+                    basePrice: 45000,
+                    markup: 2500,
+                    vendorName: 'ElectroHub Kampala',
+                    vendorPhone: '+256 700 123456'
+                }
+            ]
+        };
+
+        // Automated Tiered Pricing Engine
+        function calculatePricing(basePriceInput) {
+            const basePrice = parseFloat(basePriceInput) || 0;
+            let markup = 0;
+
+            if (basePrice >= 1000 && basePrice <= 9999) {
+                markup = 500;
+            } else if (basePrice >= 10000 && basePrice <= 49999) {
+                markup = 2500;
+            } else if (basePrice >= 50000 && basePrice <= 99999) {
+                markup = 5000;
+            } else if (basePrice >= 100000 && basePrice <= 999999) {
+                markup = 50000;
+            } else if (basePrice >= 1000000 && basePrice <= 10000000) {
+                markup = 100000;
+            } else if (basePrice >= 11000000) {
+                markup = 200000;
+            }
+
+            return {
+                basePrice,
+                markup,
+                customerPrice: basePrice + markup
+            };
+        }
+
+        // Switch App Views/Roles
+        function switchRole(role) {
+            state.activeRole = role;
+            ['customer', 'vendor', 'admin'].forEach(r => {
+                document.getElementById(`view-${r}`).classList.add('hidden');
+                document.getElementById(`nav-${r}`).className = "px-4 py-1.5 rounded-md transition text-slate-300 hover:text-white cursor-pointer";
+            });
+            document.getElementById(`view-${role}`).classList.remove('hidden');
+            document.getElementById(`nav-${role}`).className = "px-4 py-1.5 rounded-md transition bg-amber-500 text-slate-950 font-bold cursor-pointer";
+            renderApp();
+        }
+
+        // Reusable Password Visibility Toggle Function
+        function togglePasswordVisibility(inputId, btnId) {
+            const pwdInput = document.getElementById(inputId);
+            const eyeBtn = document.getElementById(btnId);
+            if (pwdInput.type === 'password') {
+                pwdInput.type = 'text';
+                eyeBtn.innerText = '🔒';
+            } else {
+                pwdInput.type = 'password';
+                eyeBtn.innerText = '👁';
+            }
+        }
+
+        // Toggle Auth Mode (Sign In vs Sign Up)
+        function toggleAuthMode() {
+            state.authMode = state.authMode === 'signin' ? 'signup' : 'signin';
+            const nameContainer = document.getElementById('field-name-container');
+            const passwordHint = document.getElementById('password-hint');
+            const title = document.getElementById('auth-title');
+            const subtitle = document.getElementById('auth-subtitle');
+            const submitBtn = document.getElementById('auth-submit-btn');
+            const toggleText = document.getElementById('auth-toggle-text');
+            const toggleBtn = document.getElementById('auth-toggle-btn');
+
+            if (state.authMode === 'signup') {
+                nameContainer.classList.remove('hidden');
+                passwordHint.classList.remove('hidden');
+                title.innerText = 'Vendor Sign Up';
+                subtitle.innerText = 'Create your secure vendor account to start selling.';
+                submitBtn.innerText = 'Register Vendor Account';
+                toggleText.innerText = 'Already have a vendor account?';
+                toggleBtn.innerText = 'Sign In';
+            } else {
+                nameContainer.classList.add('hidden');
+                passwordHint.classList.add('hidden');
+                title.innerText = 'Vendor Sign In';
+                subtitle.innerText = 'Manage your shop, upload products, and track sales.';
+                submitBtn.innerText = 'Sign In to Portal';
+                toggleText.innerText = "Don't have a vendor account?";
+                toggleBtn.innerText = 'Sign Up';
+            }
+        }
+
+        // Strong Password Validation Helper
+        function isStrongPassword(password) {
+            const strongRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[A-Za-z\d@$!%*?&]{8,}$/;
+            return strongRegex.test(password);
+        }
+
+        // Handle Vendor Auth (Sign Up / Sign In)
+        function handleVendorAuthSubmit(e) {
+            e.preventDefault();
+            const phone = document.getElementById('auth-phone').value.trim();
+            const password = document.getElementById('auth-password').value.trim();
+            const name = document.getElementById('auth-name').value.trim();
+
+            if (state.authMode === 'signup') {
+                if (!name) {
+                    alert('Please provide your name or business name.');
+                    return;
+                }
+                if (!isStrongPassword(password)) {
+                    alert('Password is too weak! It must be at least 8 characters long and include at least one uppercase letter, one lowercase letter, and one number.');
+                    return;
+                }
+                const existing = state.registeredVendors.find(v => v.phone === phone);
+                if (existing) {
+                    alert('A vendor with this phone number already exists. Please sign in.');
+                    return;
+                }
+                const newVendor = { phone, password, name };
+                state.registeredVendors.push(newVendor);
+                state.currentVendor = newVendor;
+                state.isVendorLoggedIn = true;
+                alert('Secure vendor account successfully created and verified!');
+            } else {
+                const vendor = state.registeredVendors.find(v => v.phone === phone && v.password === password);
+                if (!vendor) {
+                    alert('Invalid phone number or password. Please check your credentials.');
+                    return;
+                }
+                state.currentVendor = vendor;
+                state.isVendorLoggedIn = true;
+            }
+
+            document.getElementById('vendor-auth-form').reset();
+            renderApp();
+        }
+
+        // Vendor Logout
+        function vendorLogout() {
+            state.isVendorLoggedIn = false;
+            state.currentVendor = null;
+            renderApp();
+        }
+
+        // Handle Admin Authentication
+        function handleAdminAuthSubmit(e) {
+            e.preventDefault();
+            const inputPwd = document.getElementById('admin-auth-password').value.trim();
+            if (inputPwd === state.adminPermanentPassword) {
+                state.isAdminLoggedIn = true;
+                document.getElementById('admin-auth-password').value = '';
+                renderApp();
+            } else {
+                alert('Incorrect administrator password. Access denied.');
+            }
+        }
+
+        // Admin Logout
+        function adminLogout() {
+            state.isAdminLoggedIn = false;
+            renderApp();
+        }
+
+        // Live Pricing Preview Triggered on Typing
+        function updateLivePricingPreview() {
+            const val = document.getElementById('up-baseprice').value;
+            const res = calculatePricing(val);
+            document.getElementById('preview-base').innerText = `UGX ${res.basePrice.toLocaleString()}`;
+            document.getElementById('preview-markup').innerText = `+ UGX ${res.markup.toLocaleString()}`;
+            document.getElementById('preview-customer').innerText = `UGX ${res.customerPrice.toLocaleString()}`;
+        }
+
+        // Render UI Components based on State
+        function renderApp() {
+            // 1. Render Customer Storefront Grid
+            const grid = document.getElementById('customer-product-grid');
+            grid.innerHTML = state.products.map(item => `
+                <div class="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm hover:shadow-md transition flex flex-col">
+                    <div class="h-48 bg-slate-100 overflow-hidden relative">
+                        <img src="${item.image}" alt="${item.name}" class="w-full h-full object-cover">
+                        <span class="absolute top-2 right-2 bg-slate-900/80 text-white text-xs px-2.5 py-1 rounded-full">${item.category}</span>
+                    </div>
+                    <div class="p-4 flex-1 flex flex-col justify-between">
+                        <div>
+                            <h3 class="font-bold text-lg text-slate-900 mb-1">${item.name}</h3>
+                            <p class="text-xs text-slate-500 mb-2">Vendor: <span class="font-semibold text-slate-700">${item.vendorName}</span> (${item.location})</p>
+                            <p class="text-xs text-amber-600 font-medium mb-3">📞 Direct Contact: ${item.vendorPhone}</p>
+                        </div>
+                        <div class="flex items-center justify-between mt-4 pt-3 border-t border-slate-100">
+                            <div>
+                                <span class="text-xs text-slate-400 block">Price</span>
+                                <span class="text-lg font-black text-slate-900">UGX ${item.customerPrice.toLocaleString()}</span>
+                            </div>
+                            <button onclick="openCheckoutModal(${item.id})" class="bg-slate-900 hover:bg-slate-800 text-white px-4 py-2 rounded-lg text-sm font-semibold transition cursor-pointer">
+                                Buy Now via Joha
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+
+            // 2. Render Protected Vendor Portal Content
+            const authContainer = document.getElementById('vendor-auth-container');
+            const dashboardContainer = document.getElementById('vendor-dashboard-container');
+
+            if (state.isVendorLoggedIn) {
+                authContainer.classList.add('hidden');
+                dashboardContainer.classList.remove('hidden');
+                document.getElementById('vendor-welcome-heading').innerText = `Welcome, ${state.currentVendor.name}`;
+
+                // Incoming Sales Table (No Status Column)
+                const vendorOrders = state.orders.filter(o => o.vendorName === state.currentVendor.name);
+                const vTable = document.getElementById('vendor-orders-table');
+                vTable.innerHTML = vendorOrders.length > 0 ? vendorOrders.map(o => `
+                    <tr>
+                        <td class="p-3 font-semibold text-slate-900">${o.id}</td>
+                        <td class="p-3">${o.productName}</td>
+                        <td class="p-3 font-medium text-emerald-600">UGX ${o.basePrice.toLocaleString()}</td>
+                    </tr>
+                `).join('') : `<tr><td colspan="3" class="p-4 text-center text-slate-400 text-xs">No incoming sales yet.</td></tr>`;
+
+                // Vendor Uploaded Inventory Grid
+                const vendorInventory = state.products.filter(p => p.vendorName === state.currentVendor.name);
+                const vInventoryGrid = document.getElementById('vendor-inventory-grid');
+                vInventoryGrid.innerHTML = vendorInventory.length > 0 ? vendorInventory.map(item => `
+                    <div class="bg-slate-50 border border-slate-200 rounded-xl p-4 flex space-x-3 items-center">
+                        <img src="${item.image}" alt="${item.name}" class="w-16 h-16 object-cover rounded-lg border border-slate-200">
+                        <div class="flex-1 min-w-0">
+                            <h4 class="font-bold text-sm text-slate-900 truncate">${item.name}</h4>
+                            <p class="text-xs text-slate-500">${item.category}</p>
+                            <p class="text-xs font-black text-amber-600 mt-1">Base: UGX ${item.basePrice.toLocaleString()}</p>
+                        </div>
+                    </div>
+                `).join('') : `<p class="text-xs text-slate-400 col-span-full">You have not uploaded any items yet.</p>`;
+
+            } else {
+                authContainer.classList.remove('hidden');
+                dashboardContainer.classList.add('hidden');
+            }
+
+            // 3. Render Admin Authentication / Dashboard Content
+            const adminAuthContainer = document.getElementById('admin-auth-container');
+            const adminDashboardContainer = document.getElementById('admin-dashboard-container');
+
+            if (state.isAdminLoggedIn) {
+                adminAuthContainer.classList.add('hidden');
+                adminDashboardContainer.classList.remove('hidden');
+
+                let markupTotal = state.orders.reduce((acc, curr) => acc + curr.markup, 0);
+                document.getElementById('admin-markup').innerText = `UGX ${markupTotal.toLocaleString()}`;
+                document.getElementById('admin-count').innerText = state.orders.length;
+
+                // Render Card-based Order Fulfillment Pipeline
+                const aOrdersGrid = document.getElementById('admin-orders-grid');
+                aOrdersGrid.innerHTML = state.orders.length > 0 ? state.orders.map(o => `
+                    <div class="bg-white border border-slate-200 rounded-xl p-5 shadow-sm space-y-4 flex flex-col justify-between">
+                        <div class="flex justify-between items-start border-b border-slate-100 pb-3">
+                            <div>
+                                <span class="text-xs font-black text-slate-900 bg-slate-100 px-2.5 py-1 rounded">${o.id}</span>
+                                <h4 class="font-bold text-base text-slate-900 mt-2">${o.productName}</h4>
+                            </div>
+                            <span class="px-3 py-1 rounded-full text-xs font-bold ${
+                                o.status === 'Delivered' ? 'bg-emerald-100 text-emerald-800' :
+                                o.status === 'Failed' ? 'bg-red-100 text-red-800' :
+                                'bg-amber-100 text-amber-800'
+                            }">${o.status}</span>
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-4 text-xs">
+                            <div class="space-y-1">
+                                <p class="text-slate-400 font-bold uppercase">Customer Details</p>
+                                <p class="font-semibold text-slate-800">${o.customerName}</p>
+                                <p class="text-slate-600">📞 ${o.phone}</p>
+                                <p class="text-slate-600">📍 ${o.address}</p>
+                            </div>
+                            <div class="space-y-1">
+                                <p class="text-slate-400 font-bold uppercase">Vendor & Payment</p>
+                                <p class="font-semibold text-slate-800">${o.vendorName}</p>
+                                <p class="text-slate-600">📞 ${o.vendorPhone}</p>
+                                <p class="text-slate-600 font-medium">💳 ${o.paymentMethod}</p>
+                            </div>
+                        </div>
+
+                        <div class="pt-3 border-t border-slate-100 flex justify-between items-center text-xs">
+                            <div>
+                                <span class="text-slate-400">Total Price:</span>
+                                <span class="font-black text-slate-900 ml-1">UGX ${o.total.toLocaleString()}</span>
+                            </div>
+                            <div class="flex space-x-2">
+                                <button onclick="updateOrderStatus('${o.id}', 'Failed')" class="bg-red-50 hover:bg-red-100 text-red-600 font-bold px-3 py-1.5 rounded-lg transition cursor-pointer">Cancel</button>
+                                <button onclick="updateOrderStatus('${o.id}', 'Delivered')" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-3 py-1.5 rounded-lg transition shadow-sm cursor-pointer">Confirm</button>
+                            </div>
+                        </div>
+                    </div>
+                `).join('') : `<p class="text-xs text-slate-400 col-span-full text-center py-4">No orders in the pipeline.</p>`;
+
+            } else {
+                adminAuthContainer.classList.remove('hidden');
+                adminDashboardContainer.classList.add('hidden');
+            }
+        }
+
+        // Handle Product Upload Action
+        function handleProductUpload(e) {
+            e.preventDefault();
+            const name = document.getElementById('up-name').value;
+            const category = document.getElementById('up-category').value;
+            const image = document.getElementById('up-image').value;
+            const basePriceInput = document.getElementById('up-baseprice').value;
+
+            const pricing = calculatePricing(basePriceInput);
+
+            const newProduct = {
+                id: Date.now(),
+                name,
+                category,
+                image,
+                basePrice: pricing.basePrice,
+                customerPrice: pricing.customerPrice,
+                markup: pricing.markup,
+                vendorName: state.currentVendor.name,
+                vendorPhone: state.currentVendor.phone,
+                location: 'Kampala'
+            };
+
+            state.products.unshift(newProduct);
+            alert('Product successfully uploaded with automated markup applied!');
+            document.getElementById('upload-form').reset();
+            updateLivePricingPreview();
+            renderApp();
+        }
+
+        // Modal Controls
+        function openCheckoutModal(productId) {
+            state.selectedProduct = state.products.find(p => p.id === productId);
+            document.getElementById('modal-item-name').innerText = state.selectedProduct.name;
+            document.getElementById('modal-item-price').innerText = `Total: UGX ${state.selectedProduct.customerPrice.toLocaleString()}`;
+            document.getElementById('checkout-modal').classList.remove('hidden');
+        }
+
+        function closeCheckoutModal() {
+            document.getElementById('checkout-modal').classList.add('hidden');
+            state.selectedProduct = null;
+        }
+
+        // Handle Order Placement
+        function handleCheckoutSubmit(e) {
+            e.preventDefault();
+            const customerName = document.getElementById('chk-name').value;
+            const phone = document.getElementById('chk-phone').value;
+            const address = document.getElementById('chk-address').value;
+            const paymentMethod = document.getElementById('chk-payment').value;
+
+            const newOrder = {
+                id: 'ORD-' + Math.floor(1000 + Math.random() * 9000),
+                productName: state.selectedProduct.name,
+                customerName,
+                phone,
+                address,
+                paymentMethod,
+                status: 'Pending',
+                total: state.selectedProduct.customerPrice,
+                basePrice: state.selectedProduct.basePrice,
+                markup: state.selectedProduct.markup,
+                vendorName: state.selectedProduct.vendorName,
+                vendorPhone: state.selectedProduct.vendorPhone
+            };
+
+            state.orders.unshift(newOrder);
+            closeCheckoutModal();
+            alert('Order successfully placed! Joha Logistics has received your request.');
+            renderApp();
+        }
+
+        // Admin Pipeline Status Modifier (Confirm / Cancel)
+        function updateOrderStatus(orderId, newStatus) {
+            const order = state.orders.find(o => o.id === orderId);
+            if (order) {
+                order.status = newStatus;
+                if (newStatus === 'Delivered') {
+                    alert(`Order ${orderId} confirmed as Delivered! Payout funds are released to vendor ${order.vendorName}.`);
+                } else if (newStatus === 'Failed') {
+                    alert(`Order ${orderId} marked as Failed/Cancelled.`);
+                }
+                renderApp();
+            }
+        }
+
+        // Initial App Render
+        renderApp();
+    </script>
+</body>
+</html>
